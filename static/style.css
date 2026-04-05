@@ -1,0 +1,268 @@
+:root {
+    --bg-color: #0f172a;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    
+    --color-schifezza: #ef4444; 
+    --color-capolavoro: #10b981;
+    --color-sbirciata: #eab308;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    min-height: 100%;
+}
+
+/* Gradiente dinamico: aggiornato da JS su #bg-layer (i browser spesso non animano bene i gradienti sulle sole custom properties) */
+#bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 48%, #312e81 100%);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    line-height: 1.6;
+    min-height: 100vh;
+    background: transparent;
+    position: relative;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 4rem;
+    padding: 6rem 2rem 4rem 2rem;
+    /* Overlay più leggero così il gradiente di pagina resta visibile anche sopra */
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(15, 23, 42, 0.55) 100%), url('/static/gallery_bg.png');
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 15px 35px -5px rgba(0,0,0,0.6);
+}
+
+.hero h1 {
+    font-weight: 800;
+    font-size: 3.5rem;
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.highlight {
+    color: var(--accent);
+    background: linear-gradient(to right, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    margin-top: 1rem;
+}
+
+.glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+}
+
+.url-analyzer {
+    margin-bottom: 4rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0,0,0,0.2);
+    color: white;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(0,0,0,0.4);
+}
+
+button {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.exhibition-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.exhibition-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.source {
+    color: var(--accent);
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+}
+
+.badge-schifezza { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); }
+.badge-capolavoro { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5); }
+.badge-sbirciata { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid rgba(234,179,8,0.5); }
+
+.exhibition-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.exhibition-card h3 a {
+    color: white;
+    text-decoration: none;
+}
+
+.exhibition-card h3 a:hover {
+    text-decoration: underline;
+}
+
+.summary {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    flex-grow: 1;
+    margin-bottom: 1.5rem;
+}
+
+.play-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.play-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.play-btn.schifezza { background: var(--color-schifezza); }
+.play-btn.schifezza:hover { background: #dc2626; box-shadow: 0 0 15px rgba(239,68,68,0.4); }
+
+.play-btn.capolavoro { background: var(--color-capolavoro); }
+.play-btn.capolavoro:hover { background: #059669; box-shadow: 0 0 15px rgba(16,185,129,0.4); }
+
+.play-btn.sbirciata { background: var(--color-sbirciata); color: #000; }
+.play-btn.sbirciata:hover { background: #ca8a04; box-shadow: 0 0 15px rgba(234,179,8,0.4); }
+
+.loading {
+    text-align: center;
+    color: var(--text-muted);
+    margin: 2rem 0;
+    font-style: italic;
+    animation: pulse 1.5s infinite;
+}
+
+.error {
+    color: var(--color-schifezza);
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+@media (max-width: 768px) {
+    .container { padding: 1rem; }
+    .hero h1 { font-size: 2.5rem; }
+    .input-group { flex-direction: column; }
+}

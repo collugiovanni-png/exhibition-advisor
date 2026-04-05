@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+static/audio/title_*.mp3
+static/audio/test_*.mp3

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exhibition Advisor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="bg-layer" aria-hidden="true"></div>
+    <div class="container">
+        <header class="hero">
+            <h1>EXHIBITION<br><span class="highlight">ADVISOR</span></h1>
+            <p>Spietato. Perentorio. Infallibile.</p>
+            <button id="autoplay-btn" onclick="toggleAutoplay()" class="btn-primary" style="margin-top: 1.5rem;">📡 Avvia Flusso Radio</button>
+        </header>
+
+        <section id="autoplay-display" class="glass-panel hidden" style="text-align: center; margin-bottom: 4rem; padding: 3rem; border: 2px solid var(--accent);">
+            <div style="font-size: 0.9rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;">📻 In Onda 📻</div>
+            <h2 id="autoplay-title" style="font-size: 2rem; margin-bottom: 1.5rem;">Cercando una mostra da stroncare...</h2>
+            <p id="autoplay-judgment" class="highlight" style="font-size: 1.5rem; font-weight: bold;"></p>
+        </section>
+
+        <section class="latest-exhibitions">
+            <div class="section-header">
+                <h2>Ultime Mostre dai Feed</h2>
+                <button onclick="loadExhibitions()" id="refresh-btn" class="btn-secondary">Aggiorna Feed</button>
+            </div>
+            <div id="feed-loading" class="hidden loading">Scraping dei feed d'arte...</div>
+            <div id="exhibitions-list" class="grid-container" style="margin-bottom: 4rem;">
+                <!-- Le mostre verranno caricate qui dinamicamente -->
+            </div>
+        </section>
+
+        <section class="url-analyzer glass-panel">
+            <h2>Analizza un URL specifico</h2>
+            <div class="input-group">
+                <input type="text" id="article-url" placeholder="Incolla l'URL dell'articolo da analizzare...">
+                <button id="analyze-btn" onclick="analyzeUrl()">Giudica</button>
+            </div>
+            <div id="url-loading" class="hidden loading">Sto valutando la mostra... (preparati al peggio)</div>
+            <div id="url-result" class="hidden"></div>
+        </section>
+    </div>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        audioPlayer.volume = 1.0;
+
+        // --- APPLICAZIONE GUADAGNO PER LA VOCE DI SCARPA ---
+        let audioCtx;
+        let gainNode;
+        function initAudioAPI() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(audioPlayer);
+                gainNode = audioCtx.createGain();
+                source.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+            }
+        }
+        
+        // Inizializza l'AudioContext al primo click sulla pagina (necessario per policy browser)
+        document.addEventListener('click', initAudioAPI, { once: true });
+
+        audioPlayer.addEventListener('play', () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            if (gainNode) {
+                // Controlla se il file appartiene a Scarpa (da _1 a _5.mp3)
+                if (audioPlayer.src.match(/_[1-5]\.mp3$/)) {
+                    gainNode.gain.value = 2.5; // Aumenta il volume (prova 2.5x, circa +8dB)
+                } else {
+                    gainNode.gain.value = 1.0; // Volume normale per Livio o per i titoli
+                }
+            }
+        });
+
+        let exhibitionsData = []; // Store raw loaded data for autoplay
+        let autoplayTimeout = null;
+        let isAutoplaying = false;
+
+        /** Triadi di colori scuri (gradiente pagina) — cambiano a ogni nuovo giudizio */
+        const JUDGMENT_PALETTES = [
+            ['#0f172a', '#1e1b4b', '#4c1d95'],
+            ['#0c1929', '#134e4a', '#0e7490'],
+            ['#1a1033', '#5b21b6', '#831843'],
+            ['#0f172a', '#14532d', '#166534'],
+            ['#1c1917', '#7c2d12', '#9a3412'],
+            ['#0f172a', '#1e3a8a', '#075985'],
+            ['#18181b', '#713f12', '#854d0e'],
+            ['#0f172a', '#4c0519', '#881337'],
+            ['#042f2e', '#115e59', '#155e75'],
+            ['#1e1b4b', '#6d28d9', '#be185d'],
+            ['#0c4a6e', '#0e7490', '#0f766e'],
+            ['#292524', '#9a3412', '#b45309'],
+            ['#172554', '#3730a3', '#6b21a8'],
+            ['#052e16', '#166534', '#14532d'],
+            ['#2e1065', '#5b21b6', '#c026d3'],
+            ['#0f172a', '#0f766e', '#0369a1'],
+            ['#1c1917', '#422006', '#713f12'],
+            ['#164e63', '#155e75', '#0e7490'],
+            ['#3b0764', '#6b21a8', '#be185d'],
+            ['#0f172a', '#1c4532', '#365314'],
+            ['#1e293b', '#7c3aed', '#db2777'],
+            ['#0c0a09', '#7f1d1d', '#9f1239'],
+            ['#064e3b', '#047857', '#0d9488'],
+            ['#1e1b4b', '#312e81', '#0e7490'],
+        ];
+
+        function setJudgmentBackground() {
+            const i = Math.floor(Math.random() * JUDGMENT_PALETTES.length);
+            const [a, b, c] = JUDGMENT_PALETTES[i];
+            const el = document.getElementById('bg-layer');
+            if (!el) return;
+            /* Impostazione diretta: molti browser non aggiornano bene il gradiente su body con sole CSS variables */
+            el.style.background = `linear-gradient(145deg, ${a} 0%, ${b} 48%, ${c} 100%)`;
+        }
+
+        function playAudio(filename) {
+            audioPlayer.onended = null;
+            audioPlayer.src = '/static/audio/' + filename;
+            audioPlayer.play().catch(e => {
+                alert("Impossibile riprodurre l'audio. Assicurati che il file " + filename + " esista in static/audio/");
+            });
+        }
+
+        function playSequence(titleFile, judgmentFile) {
+            setJudgmentBackground();
+            if (titleFile && titleFile !== 'undefined' && titleFile !== 'null') {
+                audioPlayer.src = '/static/audio/' + titleFile;
+                audioPlayer.onended = function() {
+                    audioPlayer.src = '/static/audio/' + judgmentFile;
+                    audioPlayer.onended = null;
+                    audioPlayer.play().catch(e => console.log(e));
+                };
+                audioPlayer.play().catch(e => {
+                    alert("Impossibile riprodurre l'audio del titolo.");
+                });
+            } else {
+                playAudio(judgmentFile);
+            }
+        }
+
+        function createCard(item) {
+            const card = document.createElement('div');
+            card.className = 'exhibition-card glass-panel';
+            
+            // Map category to a visual badge
+            let badgeClass = 'badge-sbirciata';
+            let badgeText = 'Tiepido';
+            if (item.judgment.category === 'schifezza') { badgeClass = 'badge-schifezza'; badgeText = 'Pessima'; }
+            if (item.judgment.category === 'capolavoro') { badgeClass = 'badge-capolavoro'; badgeText = 'Capolavoro'; }
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="source">${item.source}</span>
+                    <span class="badge ${badgeClass}">${badgeText}</span>
+                </div>
+                <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
+                <p class="summary">${item.summary}</p>
+                <div class="card-actions">
+                    <button class="play-btn ${item.judgment.category}" onclick="playSequence('${item.title_audio_file}', '${item.judgment.audio_file}')">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 
+                        Ascolta Titolo + Giudizio
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        async function analyzeUrl() {
+            const urlInput = document.getElementById('article-url').value;
+            if (!urlInput) return;
+
+            const loading = document.getElementById('url-loading');
+            const resultDiv = document.getElementById('url-result');
+            const btn = document.getElementById('analyze-btn');
+
+            loading.classList.remove('hidden');
+            resultDiv.innerHTML = '';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/analyze_url', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: urlInput})
+                });
+                const data = await res.json();
+                
+                if(data.error) {
+                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    resultDiv.innerHTML = '';
+                    setJudgmentBackground();
+                    resultDiv.appendChild(createCard(data.article));
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<p class="error">Errore di rete.</p>`;
+            } finally {
+                loading.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        async function loadExhibitions() {
+            const container = document.getElementById('exhibitions-list');
+            const loading = document.getElementById('feed-loading');
+            const btn = document.getElementById('refresh-btn');
+            
+            container.innerHTML = '';
+            loading.classList.remove('hidden');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/exhibitions');
+                const data = await res.json();
+                
+                exhibitionsData = data.exhibitions; // Save globally
+                
+                data.exhibitions.forEach(exh => {
+                    container.appendChild(createCard(exh));
+                });
+                setJudgmentBackground();
+            } catch(e) {
+                container.innerHTML = `<p class="error">Impossibile caricare le mostre.</p>`;
+            } finally {
+                loading.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        // --- AUTOPLAY RADIO LOGIC ---
+        function toggleAutoplay() {
+            const btn = document.getElementById('autoplay-btn');
+            if (isAutoplaying) {
+                // Stop everything
+                isAutoplaying = false;
+                if(autoplayTimeout) clearTimeout(autoplayTimeout);
+                window.speechSynthesis.cancel();
+                audioPlayer.pause();
+                
+                btn.innerHTML = "📡 Avvia Flusso Radio";
+                btn.classList.remove('active');
+                document.getElementById('autoplay-display').classList.add('hidden');
+            } else {
+                // Start
+                if(exhibitionsData.length === 0) {
+                    alert("Attendi il caricamento delle mostre dai feed!");
+                    return;
+                }
+                isAutoplaying = true;
+                btn.innerHTML = "⏹ Ferma Flusso";
+                btn.classList.add('active');
+                document.getElementById('autoplay-display').classList.remove('hidden');
+                
+                // Ensure system is clear before starting cycle
+                window.speechSynthesis.cancel();
+                audioPlayer.pause();
+                playRandomExhibition();
+            }
+        }
+
+        function playRandomExhibition() {
+            if (!isAutoplaying || exhibitionsData.length === 0) return;
+            
+            const exh = exhibitionsData[Math.floor(Math.random() * exhibitionsData.length)];
+            
+            document.getElementById('autoplay-title').innerText = exh.title;
+            document.getElementById('autoplay-judgment').innerText = "...in attesa di giudizio...";
+            
+            // 1. Read the title via ElevenLabs Generated Audio
+            if (exh.title_audio_file) {
+                audioPlayer.src = '/static/audio/' + exh.title_audio_file;
+                audioPlayer.onended = function() {
+                    if(!isAutoplaying) return;
+                    
+                    // 2. Output judgment text visually
+                    document.getElementById('autoplay-judgment').innerText = exh.judgment.judgment;
+                    setJudgmentBackground();
+
+                    // 3. Play the prerecorded audio
+                    audioPlayer.src = '/static/audio/' + exh.judgment.audio_file;
+                    
+                    audioPlayer.onended = function() {
+                        if(isAutoplaying) {
+                            autoplayTimeout = setTimeout(playRandomExhibition, 3000);
+                        }
+                    };
+                    
+                    audioPlayer.play().catch(e => {
+                        if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
+                    });
+                };
+                
+                audioPlayer.play().catch(e => {
+                    if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
+                });
+            } else {
+                // Fallback if no audio file
+                document.getElementById('autoplay-judgment').innerText = exh.judgment.judgment;
+                setJudgmentBackground();
+                audioPlayer.src = '/static/audio/' + exh.judgment.audio_file;
+                audioPlayer.onended = function() {
+                    if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
+                };
+                audioPlayer.play().catch(e => {
+                    if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
+                });
+            }
+        }
+
+        // Colore iniziale + aggiornamento quando arrivano i feed
+        setJudgmentBackground();
+        loadExhibitions();
+    </script>
+</body>
+</html>
