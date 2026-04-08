@@ -129,20 +129,45 @@
             });
         }
 
-        function playSequence(titleFile, judgmentFile) {
+        // --- NUOVO MOTORE DI SINTESI VOCALE LOCALE (GRATIS) ---
+        function speakText(text, onEnd) {
+            // Ferma eventuali voci in corso
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'it-IT';
+            
+            // Cerchiamo una voce italiana formale (Alice su Mac è ottima)
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang === 'it-IT' && (v.name.includes('Alice') || v.name.includes('Luca')));
+            if (preferredVoice) utterance.voice = preferredVoice;
+            
+            utterance.pitch = 0.9; // Leggermente più profonda/intellettuale
+            utterance.rate = 0.95;  // Un po' più lenta e riflessiva
+            
+            utterance.onend = () => { if (onEnd) onEnd(); };
+            utterance.onerror = (e) => { console.error(e); if (onEnd) onEnd(); };
+            
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function playSequence(titleFile, synthesisText) {
             setJudgmentBackground();
-            if (titleFile && titleFile !== 'undefined' && titleFile !== 'null') {
+            
+            // 1. Riproduce il Titolo (ElevenLabs - Alta Qualità)
+            if (titleFile && titleFile !== 'undefined') {
                 audioPlayer.src = '/static/audio/' + titleFile;
                 audioPlayer.onended = function() {
-                    audioPlayer.src = '/static/audio/' + judgmentFile;
+                    // 2. Terminato il titolo, la macchina "intellettuale" legge la sintesi (Gratis)
+                    speakText(synthesisText);
                     audioPlayer.onended = null;
-                    audioPlayer.play().catch(e => console.log(e));
                 };
                 audioPlayer.play().catch(e => {
-                    alert("Impossibile riprodurre l'audio del titolo.");
+                    // Se l'audio del titolo fallisce, passa direttamente alla sintesi
+                    speakText(synthesisText);
                 });
             } else {
-                playAudio(judgmentFile);
+                speakText(synthesisText);
             }
         }
 
@@ -182,7 +207,7 @@
                     </ul>
                 </div>
                 <div class="card-actions" style="margin-top: 1.5rem;">
-                    <button class="play-btn dialettico" onclick="playSequence('${cluster.title_audio_file}', '${cluster.articles[0].judgment.audio_file}')">
+                    <button class="play-btn dialettico" onclick="playSequence('${cluster.title_audio_file}', '${synthesis.text.replace(/'/g, "\\'")}')">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 
                         Ascolta Sintesi Dialettica
                     </button>
@@ -254,10 +279,7 @@
                     ...c.articles[0],
                     title: c.main_title,
                     title_audio_file: c.title_audio_file,
-                    judgment: {
-                        ...c.articles[0].judgment,
-                        judgment: c.synthesis.text // Usiamo la sintesi come testo radio
-                    }
+                    synthesis_text: c.synthesis.text // Salviamo il testo per l'autoplay
                 }));
                 
                 data.clusters.forEach(cluster => {
@@ -312,42 +334,31 @@
             document.getElementById('autoplay-title').innerText = exh.title;
             document.getElementById('autoplay-judgment').innerText = "...in attesa di giudizio...";
             
-            // 1. Read the title via ElevenLabs Generated Audio
+            // 1. Legge il titolo con ElevenLabs
             if (exh.title_audio_file) {
                 audioPlayer.src = '/static/audio/' + exh.title_audio_file;
                 audioPlayer.onended = function() {
                     if(!isAutoplaying) return;
                     
-                    // 2. Output judgment text visually
-                    document.getElementById('autoplay-judgment').innerText = exh.judgment.judgment;
+                    // 2. Mostra il testo e cambia sfondo
+                    document.getElementById('autoplay-judgment').innerText = exh.synthesis_text;
                     setJudgmentBackground();
 
-                    // 3. Play the prerecorded audio
-                    audioPlayer.src = '/static/audio/' + exh.judgment.audio_file;
-                    
-                    audioPlayer.onended = function() {
+                    // 3. Legge la sintesi intellettuale (GRATIS)
+                    speakText(exh.synthesis_text, () => {
                         if(isAutoplaying) {
                             autoplayTimeout = setTimeout(playRandomExhibition, 3000);
                         }
-                    };
-                    
-                    audioPlayer.play().catch(e => {
-                        if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
                     });
                 };
-                
                 audioPlayer.play().catch(e => {
                     if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
                 });
             } else {
-                // Fallback if no audio file
-                document.getElementById('autoplay-judgment').innerText = exh.judgment.judgment;
+                // Fallback
+                document.getElementById('autoplay-judgment').innerText = exh.synthesis_text;
                 setJudgmentBackground();
-                audioPlayer.src = '/static/audio/' + exh.judgment.audio_file;
-                audioPlayer.onended = function() {
-                    if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
-                };
-                audioPlayer.play().catch(e => {
+                speakText(exh.synthesis_text, () => {
                     if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
                 });
             }
