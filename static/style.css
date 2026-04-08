@@ -199,6 +199,58 @@ button:disabled {
 .badge-capolavoro { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5); }
 .badge-sbirciata { background: rgba(234, 179, 8, 0.2); color: #fde047; border: 1px solid rgba(234,179,8,0.5); }
 
+.source-tag {
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-right: 0.3rem;
+}
+
+.sources-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.cluster-count {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.intellectual-critique {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--accent);
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.synthesis-text {
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    line-height: 1.4;
+}
+
+.tone-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.play-btn.dialettico {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+}
+
+.play-btn.dialettico:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}
+
 .exhibition-card h3 {
     font-size: 1.25rem;
     margin-bottom: 1rem;

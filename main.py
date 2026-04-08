@@ -4,9 +4,12 @@ from pydantic import BaseModel
 from scraper import scrape_exhibitions, scrape_article
 from analyzer import analyze_text
 from tts import generate_title_audio
+from clusterer import cluster_exhibitions
+from critic import generate_intellectual_synthesis
 from dotenv import load_dotenv
 import os
 import uvicorn
+import hashlib
 
 load_dotenv()
 
@@ -24,17 +27,37 @@ class ArticleRequest(BaseModel):
 @app.get("/api/exhibitions")
 def get_exhibitions():
     raw_exhibitions = scrape_exhibitions()
-    results = []
+    
+    # Primo passaggio: analizziamo ogni articolo singolarmente (per avere i badge)
+    processed_items = []
     for exh in raw_exhibitions:
-        title_audio = generate_title_audio(exh["title"])
-        analysis = analyze_text(exh["text"])
-        # Remove the full text to keep JSON light
-        exh.pop("text", None)
+        analysis = analyze_text(exh.get("text", ""))
+        exh.pop("text", None) # Teniamo il JSON leggero
         item = {**exh, "judgment": analysis}
-        if title_audio:
-            item["title_audio_file"] = title_audio
-        results.append(item)
-    return {"exhibitions": results}
+        processed_items.append(item)
+        
+    # Secondo passaggio: Raggruppiamo per evento
+    clusters = cluster_exhibitions(processed_items)
+    
+    final_results = []
+    for cluster in clusters:
+        # Generiamo la sintesi intellettuale (Anni '60-'70) per il gruppo
+        synthesis = generate_intellectual_synthesis(cluster)
+        
+        # Usiamo il titolo della prima mostra come principale
+        main_exh = cluster[0]
+        title_audio = generate_title_audio(main_exh["title"])
+        
+        final_results.append({
+            "id": hashlib.md5(main_exh["title"].encode()).hexdigest(),
+            "main_title": main_exh["title"],
+            "title_audio_file": title_audio,
+            "synthesis": synthesis,
+            "articles": cluster,
+            "sources_count": len(cluster)
+        })
+        
+    return {"clusters": final_results}
 
 @app.post("/api/analyze_url")
 def analyze_url(req: ArticleRequest):

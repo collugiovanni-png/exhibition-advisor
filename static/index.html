@@ -146,27 +146,45 @@
             }
         }
 
-        function createCard(item) {
+        function createClusterCard(cluster) {
             const card = document.createElement('div');
             card.className = 'exhibition-card glass-panel';
             
-            // Map category to a visual badge
-            let badgeClass = 'badge-sbirciata';
-            let badgeText = 'Tiepido';
-            if (item.judgment.category === 'schifezza') { badgeClass = 'badge-schifezza'; badgeText = 'Pessima'; }
-            if (item.judgment.category === 'capolavoro') { badgeClass = 'badge-capolavoro'; badgeText = 'Capolavoro'; }
+            // Sintesi intellettuale anni '60-'70
+            const synthesis = cluster.synthesis;
+            
+            // Generiamo i piccoli badge per ogni testata coinvolta
+            let sourceBadges = cluster.articles.map(art => {
+                let badgeClass = 'badge-sbirciata';
+                if (art.judgment.category === 'schifezza') badgeClass = 'badge-schifezza';
+                if (art.judgment.category === 'capolavoro') badgeClass = 'badge-capolavoro';
+                return `<span class="source-tag ${badgeClass}">${art.source}</span>`;
+            }).join(' ');
 
             card.innerHTML = `
                 <div class="card-header">
-                    <span class="source">${item.source}</span>
-                    <span class="badge ${badgeClass}">${badgeText}</span>
+                    <div class="sources-list">${sourceBadges}</div>
+                    <span class="cluster-count">${cluster.sources_count} fonti incrociate</span>
                 </div>
-                <h3><a href="${item.link}" target="_blank">${item.title}</a></h3>
-                <p class="summary">${item.summary}</p>
-                <div class="card-actions">
-                    <button class="play-btn ${item.judgment.category}" onclick="playSequence('${item.title_audio_file}', '${item.judgment.audio_file}')">
+                <h3>${cluster.main_title}</h3>
+                <div class="intellectual-critique">
+                    <p class="synthesis-text">"${synthesis.text}"</p>
+                    <div class="tone-label">Frequenza: ${synthesis.tone}</div>
+                </div>
+                <div class="original-articles">
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Fonti originali:</p>
+                    <ul style="list-style: none; padding: 0;">
+                        ${cluster.articles.map(art => `
+                            <li style="font-size: 0.85rem; margin-bottom: 0.3rem;">
+                                → <a href="${art.link}" target="_blank" style="color: var(--accent);">${art.source}: ${art.summary.substring(0, 40)}...</a>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="card-actions" style="margin-top: 1.5rem;">
+                    <button class="play-btn dialettico" onclick="playSequence('${cluster.title_audio_file}', '${cluster.articles[0].judgment.audio_file}')">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 
-                        Ascolta Titolo + Giudizio
+                        Ascolta Sintesi Dialettica
                     </button>
                 </div>
             `;
@@ -198,7 +216,15 @@
                 } else {
                     resultDiv.innerHTML = '';
                     setJudgmentBackground();
-                    resultDiv.appendChild(createCard(data.article));
+                    // Mock di un cluster per il risultato singolo Link Diretto
+                    const mockCluster = {
+                        main_title: data.article.title,
+                        title_audio_file: data.article.title_audio_file,
+                        synthesis: { text: "Un'indagine solitaria che attende il confronto con la prassi collettiva per svelare la sua reale natura.", tone: "riflessivo" },
+                        articles: [data.article],
+                        sources_count: 1
+                    };
+                    resultDiv.appendChild(createClusterCard(mockCluster));
                 }
             } catch (err) {
                 resultDiv.innerHTML = `<p class="error">Errore di rete.</p>`;
@@ -222,14 +248,25 @@
                 const res = await fetch('/api/exhibitions');
                 const data = await res.json();
                 
-                exhibitionsData = data.exhibitions; // Save globally
+                // Manteniamo una struttura compatibile o la aggiorniamo per l'autoplay
+                // Per ora usiamo il primo articolo di ogni cluster come base per i dati grezzi
+                exhibitionsData = data.clusters.map(c => ({
+                    ...c.articles[0],
+                    title: c.main_title,
+                    title_audio_file: c.title_audio_file,
+                    judgment: {
+                        ...c.articles[0].judgment,
+                        judgment: c.synthesis.text // Usiamo la sintesi come testo radio
+                    }
+                }));
                 
-                data.exhibitions.forEach(exh => {
-                    container.appendChild(createCard(exh));
+                data.clusters.forEach(cluster => {
+                    container.appendChild(createClusterCard(cluster));
                 });
                 setJudgmentBackground();
             } catch(e) {
-                container.innerHTML = `<p class="error">Impossibile caricare le mostre.</p>`;
+                console.error(e);
+                container.innerHTML = `<p class="error">Impossibile caricare i cluster critici.</p>`;
             } finally {
                 loading.classList.add('hidden');
                 btn.disabled = false;
