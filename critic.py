@@ -17,10 +17,36 @@ CRITICAL_TEMPLATES = {
         "Il conflitto tra le recensioni testimonia che il dispositivo della mostra non ha ancora del tutto alienato il fruitore."
     ],
     "isolation": [
-        "Un soliloquio che fatica a farsi discorso collettivo, restando prigioniero nel raggio d'azione dell'autoreferenzialità.",
+        "Un soliloquio che fatica a farsi discorso collettivo, restando prigioniero dell'autoreferenzialità.",
         "L'assenza di un coro di voci intorno a questo evento ne sottolinea la natura di 'non-accadimento' strutturale: una bolla privata.",
-        "Isolata nel suo silenzio critico, questa proposta sembra non riuscire a innescare alcun processo dialettico con la realtà sociale.",
-        "Senza il confronto con l'altro da sé, l'operazione artistica si svuota di ogni carica sovversiva, degradandosi a puro feticismo."
+        "Isolata nel suo silenzio critico, questa proposta sembra non riuscire a innescare alcun processo dialettico con la realtà.",
+        "Senza il confronto con l'altro da sé, l'operazione artistica si svuota di ogni carica sovversiva, degradandosi a feticismo.",
+        "Una monade che si specchia nella propria estetica, ignorando la complessità del tessuto sociale circostante.",
+        "Questo isolamento mediatico è forse il segno di una radicalità incompresa o, più probabilmente, di una fatuità congenita."
+    ]
+}
+
+CRITICAL_SUFFIXES = {
+    "isolation": [
+        "Il nostro sguardo, imbevuto di un rigore forse anacronistico, preferisce sospendere il giudizio.",
+        "Restiamo in attesa che il tempo, questo grande setaccio della storia, faccia il suo lavoro.",
+        "Un silenzio che parla più di mille comunicati stampa pre-confezionati.",
+        "Ci limitiamo a osservare questa deriva, con la pazienza di chi ha già visto tutto.",
+        "Un fenomeno che non merita lo sforzo di una smentita, ma solo il peso del disinteresse."
+    ],
+    "consensus": [
+        "Ma è davvero possibile una tale aderenza strutturale? Noi ne dubitiamo con spocchiosa fermezza.",
+        "Dietro questa cortina di fumo entusiasta intravediamo il vuoto di un'epoca senza padri.",
+        "Un trionfo del banale che si veste da capolavoro per rassicurare il pubblico borghese.",
+        "Il coro è perfetto, ma la melodia è del tutto assente.",
+        "Dov'è il dissenso? Dov'è la vita? Qui c'è solo l'anestesia del consenso."
+    ],
+    "collision": [
+        "Nel gioco di specchi dell'industria culturale, questo scontro è l'unica verità possibile.",
+        "Queste fratture sono l'humus su cui potrebbe rifiorire una vera coscienza critica.",
+        "Godiamoci questa dissonanza, prima che il mercato la riassorba nel suo grigiore.",
+        "Un momento di verità in un oceano di mistificazioni.",
+        "La dialettica vive ancora, nonostante gli sforzi della critica istituzionale per ucciderla."
     ]
 }
 
@@ -37,8 +63,9 @@ def generate_intellectual_synthesis(cluster):
     
     if num_sources == 1:
         template = CRITICAL_TEMPLATES["isolation"][hash_val % len(CRITICAL_TEMPLATES["isolation"])]
+        suffix = CRITICAL_SUFFIXES["isolation"][hash_val % len(CRITICAL_SUFFIXES["isolation"])]
         return {
-            "text": f"{template} Il nostro sguardo, imbevuto di un rigore forse anacronistico, preferisce sospendere il giudizio.",
+            "text": f"{template} {suffix}",
             "tone": "snob"
         }
     
@@ -49,16 +76,18 @@ def generate_intellectual_synthesis(cluster):
     if len(unique_cats) <= 1:
         # Piattezza del consenso
         template = CRITICAL_TEMPLATES["consensus"][hash_val % len(CRITICAL_TEMPLATES["consensus"])]
+        suffix = CRITICAL_SUFFIXES["consensus"][hash_val % len(CRITICAL_SUFFIXES["consensus"])]
         cat_desc = unique_cats[0] if unique_cats else "indecifrabile"
         return {
-            "text": f"{template} Ma è davvero possibile una tale aderenza intorno a un verdetto di '{cat_desc}'? Noi ne dubitiamo con spocchiosa fermezza.",
+            "text": f"{template} (Verdetto di '{cat_desc}'). {suffix}",
             "tone": "iper-critico"
         }
     else:
         # Dialettica in atto
         template = CRITICAL_TEMPLATES["collision"][hash_val % len(CRITICAL_TEMPLATES["collision"])]
+        suffix = CRITICAL_SUFFIXES["collision"][hash_val % len(CRITICAL_SUFFIXES["collision"])]
         conflict_desc = " e ".join(unique_cats)
         return {
-            "text": f"{template} Nel conflitto tra giudizi di {conflict_desc} intravediamo l'ultimo gioco di specchi dell'industria culturale.",
+            "text": f"{template} (Attrito tra {conflict_desc}). {suffix}",
             "tone": "dialettico"
         }
