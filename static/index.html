@@ -71,11 +71,11 @@
                 audioCtx.resume();
             }
             if (gainNode) {
-                // Controlla se il file appartiene a Scarpa (da _1 a _5.mp3)
-                if (audioPlayer.src.match(/_[1-5]\.mp3$/)) {
-                    gainNode.gain.value = 2.5; // Aumenta il volume (prova 2.5x, circa +8dB)
+                // Applichiamo un boost di volume (2.5x) sia ai titoli ElevenLabs che ai vecchi file di Scarpa
+                if (audioPlayer.src.includes('title_') || audioPlayer.src.match(/_[1-5]\.mp3$/)) {
+                    gainNode.gain.value = 2.5; 
                 } else {
-                    gainNode.gain.value = 1.0; // Volume normale per Livio o per i titoli
+                    gainNode.gain.value = 1.0; // Volume normale per gli altri file
                 }
             }
         });
@@ -142,8 +142,9 @@
             const preferredVoice = voices.find(v => v.lang === 'it-IT' && (v.name.includes('Alice') || v.name.includes('Luca')));
             if (preferredVoice) utterance.voice = preferredVoice;
             
-            utterance.pitch = 0.9; // Leggermente più profonda/intellettuale
-            utterance.rate = 0.95;  // Un po' più lenta e riflessiva
+            utterance.pitch = 0.9;
+            utterance.rate = 0.95;
+            utterance.volume = 0.7; // Abbassiamo un po' il volume della sintesi browser per non sovrastare il titolo
             
             utterance.onend = () => { if (onEnd) onEnd(); };
             utterance.onerror = (e) => { console.error(e); if (onEnd) onEnd(); };
