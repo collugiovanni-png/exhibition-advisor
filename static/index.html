@@ -284,13 +284,17 @@
                 const data = await res.json();
                 
                 // Manteniamo una struttura compatibile o la aggiorniamo per l'autoplay
-                // Per ora usiamo il primo articolo di ogni cluster come base per i dati grezzi
-                exhibitionsData = data.clusters.map(c => ({
-                    ...c.articles[0],
-                    title: c.main_title,
-                    title_audio_file: c.title_audio_file,
-                    synthesis_text: c.synthesis.text // Salviamo il testo per l'autoplay
-                }));
+                // Protezione contro dati mancanti
+                exhibitionsData = (data.clusters || []).map(c => {
+                    const art = (c.articles && c.articles.length > 0) ? c.articles[0] : {};
+                    const synth = c.synthesis || { text: "", tone: "indefinito" };
+                    return {
+                        ...art,
+                        title: c.main_title || art.title || "Mostra senza titolo",
+                        title_audio_file: c.title_audio_file || null,
+                        synthesis_text: synth.text
+                    };
+                });
                 
                 data.clusters.forEach(cluster => {
                     try {
@@ -301,8 +305,8 @@
                 });
                 setJudgmentBackground();
             } catch(e) {
-                console.error(e);
-                container.innerHTML = `<p class="error">Impossibile caricare i cluster critici.</p>`;
+                console.error("DEBUG FETCH ERROR:", e);
+                container.innerHTML = `<p class="error">Impossibile caricare i cluster critici. <br><small>${e.message}</small></p>`;
             } finally {
                 loading.classList.add('hidden');
                 btn.disabled = false;
