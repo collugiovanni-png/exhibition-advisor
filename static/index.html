@@ -71,9 +71,9 @@
                 audioCtx.resume();
             }
             if (gainNode) {
-                // Applichiamo un boost di volume (2.5x) sia ai titoli ElevenLabs che ai vecchi file di Scarpa
+                // Applichiamo un boost di volume (5.0x) sia ai titoli ElevenLabs che ai vecchi file di Scarpa
                 if (audioPlayer.src.includes('title_') || audioPlayer.src.match(/_[1-5]\.mp3$/)) {
-                    gainNode.gain.value = 2.5; 
+                    gainNode.gain.value = 5.0; 
                 } else {
                     gainNode.gain.value = 1.0; // Volume normale per gli altri file
                 }
@@ -144,7 +144,7 @@
             
             utterance.pitch = 0.9;
             utterance.rate = 0.95;
-            utterance.volume = 0.7; // Abbassiamo un po' il volume della sintesi browser per non sovrastare il titolo
+            utterance.volume = 1.0; // Ripristinato a 1.0 (alto e giusto) come da feedback
             
             utterance.onend = () => { if (onEnd) onEnd(); };
             utterance.onerror = (e) => { console.error(e); if (onEnd) onEnd(); };

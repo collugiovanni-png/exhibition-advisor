@@ -94,8 +94,8 @@ def _generate_elevenlabs_audio(text: str, prefix: str = "audio") -> Optional[str
             with open(filepath, 'wb') as f:
                 f.write(response.content)
             
-            # Guadagno audio (default ~9 dB per titoli, magari meno per sintesi lunghe)
-            gain_val = "9" if prefix == "title" else "6"
+            # Guadagno audio (default ~18 dB per titoli, 6 per sintesi)
+            gain_val = "18" if prefix == "title" else "6"
             try:
                 gain = float(os.environ.get(f"ELEVENLABS_{prefix.upper()}_GAIN_DB", gain_val))
             except ValueError:
