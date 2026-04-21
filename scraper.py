@@ -50,6 +50,7 @@ def scrape_zero():
                     # Per ora prendiamo quello che c'è nella card
                     results.append({
                         "source": f"Zero ({city.capitalize()})",
+                        "city": city.capitalize(),
                         "title": title,
                         "link": link,
                         "date": "In corso",
@@ -77,6 +78,7 @@ def scrape_exhibitions():
             full_text = f"{entry.title} {desc} {content}"
             exhibitions.append({
                 "source": "Artribune",
+                "city": None,
                 "title": entry.title,
                 "link": entry.link,
                 "date": entry.get("published", ""),
@@ -98,6 +100,7 @@ def scrape_exhibitions():
             full_text = f"{entry.title} {desc} {content}"
             exhibitions.append({
                 "source": "Exibart",
+                "city": None,
                 "title": entry.title,
                 "link": entry.link,
                 "date": entry.get("published", ""),
@@ -119,6 +122,7 @@ def scrape_exhibitions():
             full_text = f"{entry.title} {desc} {content}"
             exhibitions.append({
                 "source": "ATP Diary",
+                "city": None,
                 "title": entry.title,
                 "link": entry.link,
                 "date": entry.get("published", ""),
@@ -140,6 +144,7 @@ def scrape_exhibitions():
             full_text = f"{entry.title} {desc} {content}"
             exhibitions.append({
                 "source": "Segno",
+                "city": None,
                 "title": entry.title,
                 "link": entry.link,
                 "date": entry.get("published", ""),

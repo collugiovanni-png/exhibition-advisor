@@ -51,6 +51,7 @@ def get_exhibitions():
         final_results.append({
             "id": hashlib.md5(main_exh["title"].encode()).hexdigest(),
             "main_title": main_exh["title"],
+            "city": main_exh.get("city"),
             "title_audio_file": title_audio,
             "synthesis": synthesis,
             "articles": cluster,

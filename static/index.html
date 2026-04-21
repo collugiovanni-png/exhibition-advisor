@@ -49,14 +49,14 @@
         let autoplayTimeout = null;
         let isAutoplaying = false;
 
+        // Prefissi informativi tipo Giornale Radio
         const TITLE_PREFIXES = [
-            "Iniziamo l'analisi dell'evento: ",
-            "Prendiamo in esame la mostra: ",
-            "Consideriamo oggi la proposta: ",
-            "Focus sull'operazione di: ",
-            "Analizziamo la ricerca di: ",
-            "Osserviamo l'istanza di: ",
-            "Si pone al centro del dibattito: "
+            "In primo piano l'esposizione: ",
+            "Si segnala la mostra: ",
+            "Dagli aggiornamenti dei feed d'arte: ",
+            "Riflettori sull'evento: ",
+            "Focus informativo per: ",
+            "Notizie sull'esposizione: "
         ];
 
         /** Triadi di colori scuri — cambiano a ogni nuovo giudizio */
@@ -92,14 +92,14 @@
                 // Voce Maschile (Titoli) - Luca
                 const v = voices.find(v => v.lang === 'it-IT' && v.name.includes('Luca'));
                 if (v) utterance.voice = v;
-                utterance.pitch = 0.75; // Grave e istituzionale
-                utterance.rate = 0.85;  // Lento
+                utterance.pitch = 0.75; 
+                utterance.rate = 0.85;  
             } else {
                 // Voce Femminile (Analisi) - Alice
                 const v = voices.find(v => v.lang === 'it-IT' && v.name.includes('Alice'));
                 if (v) utterance.voice = v;
                 utterance.pitch = 0.8;  // Più profonda e calda (non stridula)
-                utterance.rate = 0.88;  // Meditativa
+                utterance.rate = 0.88;  
             }
             
             utterance.volume = 1.0; 
@@ -109,18 +109,28 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        function playSequence(titleText, synthesisText) {
+        function playSequence(titleText, synthesisText, city, sourceCount) {
             setJudgmentBackground();
             
-            // 1. Framing del Titolo per dare respiro
+            // 1. Costruzione frase informativa articolata
             const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
-            const articulatedTitle = prefix + titleText + ".";
+            let articulatedTitle = prefix + titleText + ". ";
+            
+            if (city && city !== 'None' && city !== 'undefined') {
+                articulatedTitle += "Un evento attualmente in corso a " + city + ". ";
+            }
+            
+            if (sourceCount > 1) {
+                articulatedTitle += "La notizia è stata segnalata da ben " + sourceCount + " fonti diverse.";
+            } else {
+                articulatedTitle += "L'informazione proviene da una singola fonte presente nei feed.";
+            }
 
-            // 2. Lettura Titolo (Voce Maschile)
+            // 2. Lettura Titolo Informativo (Voce Maschile Solenne)
             speakText(articulatedTitle, 'title', () => {
                 // 3. Pausa di riflessione (1.2 secondi)
                 setTimeout(() => {
-                    // 4. Lettura Analisi (Voce Femminile Calda)
+                    // 4. Lettura Analisi Critica (Voce Femminile Calda)
                     speakText(synthesisText, 'analysis');
                 }, 1200);
             });
@@ -158,9 +168,13 @@
                     </ul>
                 </div>
                 <div class="card-actions" style="margin-top: 1.5rem;">
-                    <button class="play-btn dialettico" data-main-title="${cluster.main_title.replace(/"/g, '&quot;')}" data-synthesis-text="${encodeURIComponent(synthesis.text)}">
+                    <button class="play-btn dialettico" 
+                            data-main-title="${cluster.main_title.replace(/"/g, '&quot;')}" 
+                            data-city="${cluster.city || ''}"
+                            data-sources="${cluster.sources_count}"
+                            data-synthesis-text="${encodeURIComponent(synthesis.text)}">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 
-                        Ascolta Sintesi Dialettica
+                        Ascolta Bollettino Critico
                     </button>
                 </div>
             `;
@@ -168,8 +182,10 @@
             const playBtn = card.querySelector('.play-btn');
             playBtn.addEventListener('click', () => {
                 const titleText = playBtn.getAttribute('data-main-title');
+                const city = playBtn.getAttribute('data-city');
+                const sources = playBtn.getAttribute('data-sources');
                 const synthesisText = decodeURIComponent(playBtn.getAttribute('data-synthesis-text'));
-                playSequence(titleText, synthesisText);
+                playSequence(titleText, synthesisText, city, sources);
             });
 
             return card;
@@ -194,6 +210,8 @@
                     return {
                         ...art,
                         title: c.main_title || art.title || "Mostra senza titolo",
+                        city: c.city,
+                        sources_count: c.sources_count,
                         synthesis_text: synth.text
                     };
                 });
@@ -239,18 +257,13 @@
             document.getElementById('autoplay-title').innerText = exh.title;
             document.getElementById('autoplay-judgment').innerText = "...preparazione analisi...";
             
-            const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
-            speakText(prefix + exh.title + ".", 'title', () => {
-                if(!isAutoplaying) return;
-                setTimeout(() => {
-                    if(!isAutoplaying) return;
-                    document.getElementById('autoplay-judgment').innerText = exh.synthesis_text;
-                    setJudgmentBackground();
-                    speakText(exh.synthesis_text, 'analysis', () => {
-                        if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
-                    });
-                }, 1200);
-            });
+            playSequence(exh.title, exh.synthesis_text, exh.city, exh.sources_count);
+            
+            // Per l'autoplay dobbiamo sapere quando finisce la sequenza per programmare la successiva
+            // speakText non è facile da concatenare così, quindi usiamo un timeout approssimativo o modifichiamo playSequence
+            // Per ora semplifichiamo: ricalcoliamo il timeout basandoci sulla lunghezza testo
+            const estimatedDuration = (exh.title.length + exh.synthesis_text.length) * 80 + 3000;
+            autoplayTimeout = setTimeout(playRandomExhibition, estimatedDuration);
         }
 
         async function analyzeUrl() {
@@ -273,6 +286,7 @@
                 } else {
                     const mock = {
                         main_title: data.article.title,
+                        city: data.article.city,
                         synthesis: { text: "Un'indagine solitaria che attende il confronto con la prassi collettiva per svelare la sua reale natura.", tone: "riflessivo" },
                         articles: [data.article],
                         sources_count: 1
@@ -290,7 +304,6 @@
         // Init
         setJudgmentBackground();
         loadExhibitions();
-        // Sblocco sintesi vocale
         document.addEventListener('click', () => { window.speechSynthesis.getVoices(); }, { once: true });
     </script>
 </body>
