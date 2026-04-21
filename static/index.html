@@ -44,47 +44,22 @@
         </section>
     </div>
 
-    <audio id="audio-player"></audio>
-
     <script>
-        const audioPlayer = document.getElementById('audio-player');
-        audioPlayer.volume = 1.0;
-
-        // --- APPLICAZIONE GUADAGNO PER LA VOCE DI SCARPA ---
-        let audioCtx;
-        let gainNode;
-        function initAudioAPI() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioCtx.createMediaElementSource(audioPlayer);
-                gainNode = audioCtx.createGain();
-                source.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-            }
-        }
-        
-        // Inizializza l'AudioContext al primo click sulla pagina (necessario per policy browser)
-        document.addEventListener('click', initAudioAPI, { once: true });
-
-        audioPlayer.addEventListener('play', () => {
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            if (gainNode) {
-                // Applichiamo un boost di volume (5.0x) sia ai titoli ElevenLabs che ai vecchi file di Scarpa
-                if (audioPlayer.src.includes('title_') || audioPlayer.src.match(/_[1-5]\.mp3$/)) {
-                    gainNode.gain.value = 5.0; 
-                } else {
-                    gainNode.gain.value = 1.0; // Volume normale per gli altri file
-                }
-            }
-        });
-
-        let exhibitionsData = []; // Store raw loaded data for autoplay
+        let exhibitionsData = []; 
         let autoplayTimeout = null;
         let isAutoplaying = false;
 
-        /** Triadi di colori scuri (gradiente pagina) — cambiano a ogni nuovo giudizio */
+        const TITLE_PREFIXES = [
+            "Iniziamo l'analisi dell'evento: ",
+            "Prendiamo in esame la mostra: ",
+            "Consideriamo oggi la proposta: ",
+            "Focus sull'operazione di: ",
+            "Analizziamo la ricerca di: ",
+            "Osserviamo l'istanza di: ",
+            "Si pone al centro del dibattito: "
+        ];
+
+        /** Triadi di colori scuri — cambiano a ogni nuovo giudizio */
         const JUDGMENT_PALETTES = [
             ['#0f172a', '#1e1b4b', '#4c1d95'],
             ['#0c1929', '#134e4a', '#0e7490'],
@@ -96,91 +71,67 @@
             ['#0f172a', '#4c0519', '#881337'],
             ['#042f2e', '#115e59', '#155e75'],
             ['#1e1b4b', '#6d28d9', '#be185d'],
-            ['#0c4a6e', '#0e7490', '#0f766e'],
-            ['#292524', '#9a3412', '#b45309'],
-            ['#172554', '#3730a3', '#6b21a8'],
-            ['#052e16', '#166534', '#14532d'],
-            ['#2e1065', '#5b21b6', '#c026d3'],
-            ['#0f172a', '#0f766e', '#0369a1'],
-            ['#1c1917', '#422006', '#713f12'],
-            ['#164e63', '#155e75', '#0e7490'],
-            ['#3b0764', '#6b21a8', '#be185d'],
-            ['#0f172a', '#1c4532', '#365314'],
-            ['#1e293b', '#7c3aed', '#db2777'],
-            ['#0c0a09', '#7f1d1d', '#9f1239'],
-            ['#064e3b', '#047857', '#0d9488'],
-            ['#1e1b4b', '#312e81', '#0e7490'],
         ];
 
         function setJudgmentBackground() {
             const i = Math.floor(Math.random() * JUDGMENT_PALETTES.length);
             const [a, b, c] = JUDGMENT_PALETTES[i];
             const el = document.getElementById('bg-layer');
-            if (!el) return;
-            /* Impostazione diretta: molti browser non aggiornano bene il gradiente su body con sole CSS variables */
-            el.style.background = `linear-gradient(145deg, ${a} 0%, ${b} 48%, ${c} 100%)`;
+            if (el) el.style.background = `linear-gradient(145deg, ${a} 0%, ${b} 48%, ${c} 100%)`;
         }
 
-        function playAudio(filename) {
-            audioPlayer.onended = null;
-            audioPlayer.src = '/static/audio/' + filename;
-            audioPlayer.play().catch(e => {
-                alert("Impossibile riprodurre l'audio. Assicurati che il file " + filename + " esista in static/audio/");
-            });
-        }
-
-        // --- NUOVO MOTORE DI SINTESI VOCALE LOCALE (GRATIS) ---
-        function speakText(text, onEnd) {
-            // Ferma eventuali voci in corso
+        // --- MOTORE DI SINTESI VOCALE LOCALE (GRATIS & BILANCIATA) ---
+        function speakText(text, type, onEnd) {
             window.speechSynthesis.cancel();
-
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'it-IT';
             
-            // Cerchiamo una voce italiana formale (Alice su Mac è ottima)
             const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang === 'it-IT' && (v.name.includes('Alice') || v.name.includes('Luca')));
-            if (preferredVoice) utterance.voice = preferredVoice;
             
-            utterance.pitch = 0.9;
-            utterance.rate = 0.95;
-            utterance.volume = 1.0; // Ripristinato a 1.0 (alto e giusto) come da feedback
+            if (type === 'title') {
+                // Voce Maschile (Titoli) - Luca
+                const v = voices.find(v => v.lang === 'it-IT' && v.name.includes('Luca'));
+                if (v) utterance.voice = v;
+                utterance.pitch = 0.75; // Grave e istituzionale
+                utterance.rate = 0.85;  // Lento
+            } else {
+                // Voce Femminile (Analisi) - Alice
+                const v = voices.find(v => v.lang === 'it-IT' && v.name.includes('Alice'));
+                if (v) utterance.voice = v;
+                utterance.pitch = 0.8;  // Più profonda e calda (non stridula)
+                utterance.rate = 0.88;  // Meditativa
+            }
             
+            utterance.volume = 1.0; 
             utterance.onend = () => { if (onEnd) onEnd(); };
             utterance.onerror = (e) => { console.error(e); if (onEnd) onEnd(); };
             
             window.speechSynthesis.speak(utterance);
         }
 
-        function playSequence(titleFile, synthesisText) {
+        function playSequence(titleText, synthesisText) {
             setJudgmentBackground();
             
-            // 1. Riproduce il Titolo (ElevenLabs - Alta Qualità)
-            if (titleFile && titleFile !== 'undefined') {
-                audioPlayer.src = '/static/audio/' + titleFile;
-                audioPlayer.onended = function() {
-                    // 2. Terminato il titolo, la macchina "intellettuale" legge la sintesi (Gratis)
-                    speakText(synthesisText);
-                    audioPlayer.onended = null;
-                };
-                audioPlayer.play().catch(e => {
-                    // Se l'audio del titolo fallisce, passa direttamente alla sintesi
-                    speakText(synthesisText);
-                });
-            } else {
-                speakText(synthesisText);
-            }
+            // 1. Framing del Titolo per dare respiro
+            const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
+            const articulatedTitle = prefix + titleText + ".";
+
+            // 2. Lettura Titolo (Voce Maschile)
+            speakText(articulatedTitle, 'title', () => {
+                // 3. Pausa di riflessione (1.2 secondi)
+                setTimeout(() => {
+                    // 4. Lettura Analisi (Voce Femminile Calda)
+                    speakText(synthesisText, 'analysis');
+                }, 1200);
+            });
         }
 
         function createClusterCard(cluster) {
             const card = document.createElement('div');
             card.className = 'exhibition-card glass-panel';
+            const synthesis = cluster.synthesis || { text: "Analisi in corso...", tone: "sconosciuto" };
             
-            // Sintesi intellettuale anni '60-'70
-            const synthesis = cluster.synthesis;
-            
-            // Generiamo i piccoli badge per ogni testata coinvolta
-            let sourceBadges = cluster.articles.map(art => {
+            let sourceBadges = (cluster.articles || []).map(art => {
                 let badgeClass = 'badge-sbirciata';
                 if (art.judgment.category === 'schifezza') badgeClass = 'badge-schifezza';
                 if (art.judgment.category === 'capolavoro') badgeClass = 'badge-capolavoro';
@@ -198,9 +149,8 @@
                     <div class="tone-label">Frequenza: ${synthesis.tone}</div>
                 </div>
                 <div class="original-articles">
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">Fonti originali:</p>
                     <ul style="list-style: none; padding: 0;">
-                        ${cluster.articles.map(art => `
+                        ${(cluster.articles || []).map(art => `
                             <li style="font-size: 0.85rem; margin-bottom: 0.3rem;">
                                 → <a href="${art.link}" target="_blank" style="color: var(--accent);">${art.source}: ${art.summary.substring(0, 40)}...</a>
                             </li>
@@ -208,66 +158,21 @@
                     </ul>
                 </div>
                 <div class="card-actions" style="margin-top: 1.5rem;">
-                    <button class="play-btn dialettico" data-title-file="${cluster.title_audio_file}" data-synthesis-text="${encodeURIComponent(synthesis.text)}">
+                    <button class="play-btn dialettico" data-main-title="${cluster.main_title.replace(/"/g, '&quot;')}" data-synthesis-text="${encodeURIComponent(synthesis.text)}">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 
                         Ascolta Sintesi Dialettica
                     </button>
                 </div>
             `;
 
-            // Aggiungiamo il listener in modo programmatico invece di usare onclick inline (che si rompe con le virgolette)
             const playBtn = card.querySelector('.play-btn');
             playBtn.addEventListener('click', () => {
-                const titleFile = playBtn.getAttribute('data-title-file');
+                const titleText = playBtn.getAttribute('data-main-title');
                 const synthesisText = decodeURIComponent(playBtn.getAttribute('data-synthesis-text'));
-                playSequence(titleFile, synthesisText);
+                playSequence(titleText, synthesisText);
             });
 
             return card;
-        }
-
-        async function analyzeUrl() {
-            const urlInput = document.getElementById('article-url').value;
-            if (!urlInput) return;
-
-            const loading = document.getElementById('url-loading');
-            const resultDiv = document.getElementById('url-result');
-            const btn = document.getElementById('analyze-btn');
-
-            loading.classList.remove('hidden');
-            resultDiv.innerHTML = '';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/analyze_url', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({url: urlInput})
-                });
-                const data = await res.json();
-                
-                if(data.error) {
-                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
-                } else {
-                    resultDiv.innerHTML = '';
-                    setJudgmentBackground();
-                    // Mock di un cluster per il risultato singolo Link Diretto
-                    const mockCluster = {
-                        main_title: data.article.title,
-                        title_audio_file: data.article.title_audio_file,
-                        synthesis: { text: "Un'indagine solitaria che attende il confronto con la prassi collettiva per svelare la sua reale natura.", tone: "riflessivo" },
-                        articles: [data.article],
-                        sources_count: 1
-                    };
-                    resultDiv.appendChild(createClusterCard(mockCluster));
-                }
-            } catch (err) {
-                resultDiv.innerHTML = `<p class="error">Errore di rete.</p>`;
-            } finally {
-                loading.classList.add('hidden');
-                resultDiv.classList.remove('hidden');
-                btn.disabled = false;
-            }
         }
 
         async function loadExhibitions() {
@@ -283,15 +188,12 @@
                 const res = await fetch('/api/exhibitions');
                 const data = await res.json();
                 
-                // Manteniamo una struttura compatibile o la aggiorniamo per l'autoplay
-                // Protezione contro dati mancanti
                 exhibitionsData = (data.clusters || []).map(c => {
                     const art = (c.articles && c.articles.length > 0) ? c.articles[0] : {};
                     const synth = c.synthesis || { text: "", tone: "indefinito" };
                     return {
                         ...art,
                         title: c.main_title || art.title || "Mostra senza titolo",
-                        title_audio_file: c.title_audio_file || null,
                         synthesis_text: synth.text
                     };
                 });
@@ -299,13 +201,11 @@
                 data.clusters.forEach(cluster => {
                     try {
                         container.appendChild(createClusterCard(cluster));
-                    } catch (cardErr) {
-                        console.error("Errore creazione card:", cardErr, cluster);
-                    }
+                    } catch (e) { console.error(e); }
                 });
                 setJudgmentBackground();
             } catch(e) {
-                console.error("DEBUG FETCH ERROR:", e);
+                console.error(e);
                 container.innerHTML = `<p class="error">Impossibile caricare i cluster critici. <br><small>${e.message}</small></p>`;
             } finally {
                 loading.classList.add('hidden');
@@ -313,78 +213,85 @@
             }
         }
 
-        // --- AUTOPLAY RADIO LOGIC ---
         function toggleAutoplay() {
             const btn = document.getElementById('autoplay-btn');
             if (isAutoplaying) {
-                // Stop everything
                 isAutoplaying = false;
                 if(autoplayTimeout) clearTimeout(autoplayTimeout);
                 window.speechSynthesis.cancel();
-                audioPlayer.pause();
-                
                 btn.innerHTML = "📡 Avvia Flusso Radio";
                 btn.classList.remove('active');
                 document.getElementById('autoplay-display').classList.add('hidden');
             } else {
-                // Start
-                if(exhibitionsData.length === 0) {
-                    alert("Attendi il caricamento delle mostre dai feed!");
-                    return;
-                }
+                if(exhibitionsData.length === 0) return alert("Attendi il caricamento delle mostre!");
                 isAutoplaying = true;
                 btn.innerHTML = "⏹ Ferma Flusso";
                 btn.classList.add('active');
                 document.getElementById('autoplay-display').classList.remove('hidden');
-                
-                // Ensure system is clear before starting cycle
-                window.speechSynthesis.cancel();
-                audioPlayer.pause();
                 playRandomExhibition();
             }
         }
 
         function playRandomExhibition() {
             if (!isAutoplaying || exhibitionsData.length === 0) return;
-            
             const exh = exhibitionsData[Math.floor(Math.random() * exhibitionsData.length)];
             
             document.getElementById('autoplay-title').innerText = exh.title;
-            document.getElementById('autoplay-judgment').innerText = "...in attesa di giudizio...";
+            document.getElementById('autoplay-judgment').innerText = "...preparazione analisi...";
             
-            // 1. Legge il titolo con ElevenLabs
-            if (exh.title_audio_file) {
-                audioPlayer.src = '/static/audio/' + exh.title_audio_file;
-                audioPlayer.onended = function() {
+            const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
+            speakText(prefix + exh.title + ".", 'title', () => {
+                if(!isAutoplaying) return;
+                setTimeout(() => {
                     if(!isAutoplaying) return;
-                    
-                    // 2. Mostra il testo e cambia sfondo
                     document.getElementById('autoplay-judgment').innerText = exh.synthesis_text;
                     setJudgmentBackground();
-
-                    // 3. Legge la sintesi intellettuale (GRATIS)
-                    speakText(exh.synthesis_text, () => {
-                        if(isAutoplaying) {
-                            autoplayTimeout = setTimeout(playRandomExhibition, 3000);
-                        }
+                    speakText(exh.synthesis_text, 'analysis', () => {
+                        if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
                     });
-                };
-                audioPlayer.play().catch(e => {
-                    if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
+                }, 1200);
+            });
+        }
+
+        async function analyzeUrl() {
+            const urlInput = document.getElementById('article-url').value;
+            if (!urlInput) return;
+            const loading = document.getElementById('url-loading');
+            const resultDiv = document.getElementById('url-result');
+            loading.classList.remove('hidden');
+            resultDiv.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/analyze_url', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: urlInput})
                 });
-            } else {
-                // Fallback
-                document.getElementById('autoplay-judgment').innerText = exh.synthesis_text;
-                setJudgmentBackground();
-                speakText(exh.synthesis_text, () => {
-                    if(isAutoplaying) autoplayTimeout = setTimeout(playRandomExhibition, 3000);
-                });
+                const data = await res.json();
+                if(data.error) {
+                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    const mock = {
+                        main_title: data.article.title,
+                        synthesis: { text: "Un'indagine solitaria che attende il confronto con la prassi collettiva per svelare la sua reale natura.", tone: "riflessivo" },
+                        articles: [data.article],
+                        sources_count: 1
+                    };
+                    resultDiv.appendChild(createClusterCard(mock));
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<p class="error">Errore di rete.</p>`;
+            } finally {
+                loading.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
             }
         }
 
-        // Colore iniziale + aggiornamento quando arrivano i feed
+        // Init
         setJudgmentBackground();
         loadExhibitions();
+        // Sblocco sintesi vocale
+        document.addEventListener('click', () => { window.speechSynthesis.getVoices(); }, { once: true });
     </script>
 </body>
 </html>
