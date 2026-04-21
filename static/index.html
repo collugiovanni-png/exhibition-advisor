@@ -208,12 +208,21 @@
                     </ul>
                 </div>
                 <div class="card-actions" style="margin-top: 1.5rem;">
-                    <button class="play-btn dialettico" onclick="playSequence('${cluster.title_audio_file}', '${synthesis.text.replace(/'/g, "\\'")}')">
+                    <button class="play-btn dialettico" data-title-file="${cluster.title_audio_file}" data-synthesis-text="${encodeURIComponent(synthesis.text)}">
                         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> 
                         Ascolta Sintesi Dialettica
                     </button>
                 </div>
             `;
+
+            // Aggiungiamo il listener in modo programmatico invece di usare onclick inline (che si rompe con le virgolette)
+            const playBtn = card.querySelector('.play-btn');
+            playBtn.addEventListener('click', () => {
+                const titleFile = playBtn.getAttribute('data-title-file');
+                const synthesisText = decodeURIComponent(playBtn.getAttribute('data-synthesis-text'));
+                playSequence(titleFile, synthesisText);
+            });
+
             return card;
         }
 
@@ -284,7 +293,11 @@
                 }));
                 
                 data.clusters.forEach(cluster => {
-                    container.appendChild(createClusterCard(cluster));
+                    try {
+                        container.appendChild(createClusterCard(cluster));
+                    } catch (cardErr) {
+                        console.error("Errore creazione card:", cardErr, cluster);
+                    }
                 });
                 setJudgmentBackground();
             } catch(e) {
