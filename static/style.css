@@ -58,7 +58,11 @@ body {
     margin-bottom: 4rem;
     padding: 2rem;
     
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.95) 100%), url('/static/gallery_bg.png') center / cover no-repeat, #000000;
+    background-color: #000000;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/static/gallery_bg.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-bottom: none;
 }
 
