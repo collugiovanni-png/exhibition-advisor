@@ -49,14 +49,14 @@
         let autoplayTimeout = null;
         let isAutoplaying = false;
 
-        // Prefissi informativi tipo Giornale Radio
+        // Prefissi informativi tipo Giornale Radio (Aggiornati per verifica cache)
         const TITLE_PREFIXES = [
-            "In primo piano l'esposizione: ",
-            "Si segnala la mostra: ",
-            "Dagli aggiornamenti dei feed d'arte: ",
-            "Riflettori sull'evento: ",
-            "Focus informativo per: ",
-            "Notizie sull'esposizione: "
+            "In primo piano, analisi per l'esposizione: ",
+            "Si segnala la mostra in esame: ",
+            "Aggiornamento critico dai feed d'arte: ",
+            "Riflettori accesi sull'evento: ",
+            "Focus speculativo per: ",
+            "Notizie sulla mostra in oggetto: "
         ];
 
         /** Triadi di colori scuri — cambiano a ogni nuovo giudizio */
@@ -81,59 +81,78 @@
         }
 
         // --- MOTORE DI SINTESI VOCALE LOCALE (GRATIS & BILANCIATA) ---
+        // Assicura che le voci siano caricate (Fix per Firefox)
+        let voices = [];
+        function loadVoices() {
+            voices = window.speechSynthesis.getVoices();
+        }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
+
         function speakText(text, type, onEnd) {
-            window.speechSynthesis.cancel();
+            if (!isAutoplaying && type !== 'manual') return;
+
+            // Scriviamo nel monitor di debug
+            document.getElementById('debug-monitor').innerText = "STREMAING AUDIO [" + type + "]: " + text;
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'it-IT';
+            utterance.volume = 1.0; 
             
             const voices = window.speechSynthesis.getVoices();
             
-            if (type === 'title') {
-                // Voce Maschile (Titoli) - Luca
-                const v = voices.find(v => v.lang === 'it-IT' && v.name.includes('Luca'));
-                if (v) utterance.voice = v;
+            if (type === 'title' || (type === 'manual' && text.length < 100)) {
+                utterance.voice = voices.find(v => v.lang === 'it-IT' && (v.name.includes('Luca') || v.name.includes('Lucia'))) || null;
                 utterance.pitch = 0.75; 
                 utterance.rate = 0.85;  
             } else {
-                // Voce Femminile (Analisi) - Alice
-                const v = voices.find(v => v.lang === 'it-IT' && v.name.includes('Alice'));
-                if (v) utterance.voice = v;
-                utterance.pitch = 0.8;  // Più profonda e calda (non stridula)
+                utterance.voice = voices.find(v => v.lang === 'it-IT' && (v.name.includes('Alice') || v.name.includes('Elsa'))) || null;
+                utterance.pitch = 0.8; 
                 utterance.rate = 0.88;  
             }
             
-            utterance.volume = 1.0; 
-            utterance.onend = () => { if (onEnd) onEnd(); };
-            utterance.onerror = (e) => { console.error(e); if (onEnd) onEnd(); };
+            utterance.onend = () => { 
+                if (onEnd && (isAutoplaying || type === 'manual')) onEnd(); 
+            };
             
+            utterance.onerror = (e) => {
+                console.error("Errore Sintesi:", e);
+                if (onEnd && (isAutoplaying || type === 'manual')) onEnd();
+            };
+
             window.speechSynthesis.speak(utterance);
         }
 
-        function playSequence(titleText, synthesisText, city, sourceCount) {
+        let sequenceTimeout = null;
+
+        function playSequence(titleText, synthesisText, city, sourceCount, isManual = false) {
+            if (!isAutoplaying && !isManual) return;
+            
             setJudgmentBackground();
-            
-            // 1. Costruzione frase informativa articolata
             const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
-            let articulatedTitle = prefix + titleText + ". ";
             
-            if (city && city !== 'None' && city !== 'undefined') {
+            // Costruzione titolo con città
+            let cleanTitle = titleText.replace(/l'informazione.*singola fonte.*feed/gi, "");
+            let articulatedTitle = prefix + cleanTitle.trim() + ". ";
+            
+            if (city && city !== 'None' && city !== 'undefined' && city !== '') {
                 articulatedTitle += "Un evento attualmente in corso a " + city + ". ";
             }
             
             if (sourceCount > 1) {
                 articulatedTitle += "La notizia è stata segnalata da ben " + sourceCount + " fonti diverse.";
-            } else {
-                articulatedTitle += "L'informazione proviene da una singola fonte presente nei feed.";
             }
 
-            // 2. Lettura Titolo Informativo (Voce Maschile Solenne)
-            speakText(articulatedTitle, 'title', () => {
-                // 3. Pausa di riflessione (1.2 secondi)
-                setTimeout(() => {
-                    // 4. Lettura Analisi Critica (Voce Femminile Calda)
-                    speakText(synthesisText, 'analysis');
-                }, 1200);
-            });
+            // Piccolo ritardo per stabilità
+            setTimeout(() => {
+                speakText(articulatedTitle, isManual ? 'manual' : 'title', () => {
+                    sequenceTimeout = setTimeout(() => {
+                        speakText(synthesisText, isManual ? 'manual' : 'analysis', () => {
+                            sequenceTimeout = null;
+                        });
+                    }, 1200);
+                });
+            }, 100);
         }
 
         function createClusterCard(cluster) {
@@ -185,7 +204,7 @@
                 const city = playBtn.getAttribute('data-city');
                 const sources = playBtn.getAttribute('data-sources');
                 const synthesisText = decodeURIComponent(playBtn.getAttribute('data-synthesis-text'));
-                playSequence(titleText, synthesisText, city, sources);
+                playSequence(titleText, synthesisText, city, sources, true);
             });
 
             return card;
@@ -216,6 +235,9 @@
                     };
                 });
                 
+                // Resetta la playlist per riflettere i nuovi dati
+                playlistIndices = [];
+                
                 data.clusters.forEach(cluster => {
                     try {
                         container.appendChild(createClusterCard(cluster));
@@ -231,11 +253,17 @@
             }
         }
 
+        let playlistIndices = [];
+
         function toggleAutoplay() {
             const btn = document.getElementById('autoplay-btn');
             if (isAutoplaying) {
                 isAutoplaying = false;
                 if(autoplayTimeout) clearTimeout(autoplayTimeout);
+                if(sequenceTimeout) {
+                    clearTimeout(sequenceTimeout);
+                    sequenceTimeout = null;
+                }
                 window.speechSynthesis.cancel();
                 btn.innerHTML = "📡 Avvia Flusso Radio";
                 btn.classList.remove('active');
@@ -246,24 +274,41 @@
                 btn.innerHTML = "⏹ Ferma Flusso";
                 btn.classList.add('active');
                 document.getElementById('autoplay-display').classList.remove('hidden');
-                playRandomExhibition();
+                
+                // Inizializza playlist se vuota
+                if (playlistIndices.length === 0) {
+                    fillPlaylist();
+                }
+                playNextExhibition();
             }
         }
 
-        function playRandomExhibition() {
+        function fillPlaylist() {
+            playlistIndices = exhibitionsData.map((_, i) => i);
+            // Fisher-Yates Shuffle
+            for (let i = playlistIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [playlistIndices[i], playlistIndices[j]] = [playlistIndices[j], playlistIndices[i]];
+            }
+        }
+
+        function playNextExhibition() {
             if (!isAutoplaying || exhibitionsData.length === 0) return;
-            const exh = exhibitionsData[Math.floor(Math.random() * exhibitionsData.length)];
+            
+            if (playlistIndices.length === 0) {
+                fillPlaylist();
+            }
+            
+            const idx = playlistIndices.pop();
+            const exh = exhibitionsData[idx];
             
             document.getElementById('autoplay-title').innerText = exh.title;
             document.getElementById('autoplay-judgment').innerText = "...preparazione analisi...";
             
             playSequence(exh.title, exh.synthesis_text, exh.city, exh.sources_count);
             
-            // Per l'autoplay dobbiamo sapere quando finisce la sequenza per programmare la successiva
-            // speakText non è facile da concatenare così, quindi usiamo un timeout approssimativo o modifichiamo playSequence
-            // Per ora semplifichiamo: ricalcoliamo il timeout basandoci sulla lunghezza testo
             const estimatedDuration = (exh.title.length + exh.synthesis_text.length) * 80 + 3000;
-            autoplayTimeout = setTimeout(playRandomExhibition, estimatedDuration);
+            autoplayTimeout = setTimeout(playNextExhibition, estimatedDuration);
         }
 
         async function analyzeUrl() {
@@ -287,7 +332,7 @@
                     const mock = {
                         main_title: data.article.title,
                         city: data.article.city,
-                        synthesis: { text: "Un'indagine solitaria che attende il confronto con la prassi collettiva per svelare la sua reale natura.", tone: "riflessivo" },
+                        synthesis: data.article.synthesis,
                         articles: [data.article],
                         sources_count: 1
                     };

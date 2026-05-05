@@ -9,7 +9,30 @@ from critic import generate_intellectual_synthesis
 from dotenv import load_dotenv
 import os
 import uvicorn
+import re
 import hashlib
+
+def clean_redundant_phrase(data):
+    """Pulisce ricorsivamente qualsiasi stringa contenente la frase fastidiosa."""
+    if isinstance(data, str):
+        # Pattern molto aggressivo che becca "singola fonte", "proviene da", "feed" etc.
+        patterns = [
+            r"L'informazione.*singola fonte.*feed\.?",
+            r"L'informazione.*proviene.*singola fonte\.?",
+            r"proviene da una singola fonte\.?",
+            r"presente in una singola fonte\.?",
+            r"presente nei feed\.?",
+            r"L'articolo .* proviene da .*"
+        ]
+        text = data
+        for p in patterns:
+            text = re.sub(p, "", text, flags=re.IGNORECASE)
+        return text.strip()
+    elif isinstance(data, list):
+        return [clean_redundant_phrase(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: clean_redundant_phrase(v) for k, v in data.items()}
+    return data
 
 load_dotenv()
 
@@ -50,15 +73,18 @@ def get_exhibitions():
         
         final_results.append({
             "id": hashlib.md5(main_exh["title"].encode()).hexdigest(),
-            "main_title": main_exh["title"],
+            "main_title": clean_redundant_phrase(main_exh["title"]),
             "city": main_exh.get("city"),
             "title_audio_file": title_audio,
-            "synthesis": synthesis,
+            "synthesis": {
+                "text": clean_redundant_phrase(synthesis["text"]),
+                "tone": synthesis["tone"]
+            },
             "articles": cluster,
             "sources_count": len(cluster)
         })
         
-    return {"clusters": final_results}
+    return clean_redundant_phrase({"clusters": final_results})
 
 @app.post("/api/analyze_url")
 def analyze_url(req: ArticleRequest):
@@ -66,13 +92,26 @@ def analyze_url(req: ArticleRequest):
     if not article:
         raise HTTPException(status_code=400, detail="Cannot scrape the article")
     
+    # Generiamo la sintesi per il singolo articolo trattandolo come un cluster di 1
+    synthesis = generate_intellectual_synthesis([article])
+    
     title_audio = generate_title_audio(article.get("title", "Titolo Sconosciuto"))
     analysis = analyze_text(article.get("text", ""))
     article.pop("text", None)
-    item = {**article, "judgment": analysis}
+    
+    item = {
+        **article, 
+        "title": clean_redundant_phrase(article.get("title", "")),
+        "judgment": analysis,
+        "synthesis": {
+            "text": clean_redundant_phrase(synthesis["text"]),
+            "tone": synthesis["tone"]
+        }
+    }
+    
     if title_audio:
         item["title_audio_file"] = title_audio
-    return {"article": item}
+    return clean_redundant_phrase({"article": item})
 
 from fastapi.responses import FileResponse
 @app.get("/")

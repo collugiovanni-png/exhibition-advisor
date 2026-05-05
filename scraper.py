@@ -7,9 +7,26 @@ EXIBART_RECENSIONI = "https://www.exibart.com/argomento/arte-contemporanea/feed/
 ATP_DIARY_FEED = "https://atpdiary.com/feed/"
 SEGNO_FEED = "https://segnonline.it/feed/"
 
+import re
+
 def clean_html(raw_html: str) -> str:
     soup = BeautifulSoup(raw_html, "html.parser")
-    return soup.get_text(separator=" ", strip=True)
+    text = soup.get_text(separator=" ", strip=True)
+    
+    # Rimuove diciture pubblicitarie/attribuzioni comuni dei feed (es. "L'articolo... proviene da...")
+    patterns_to_remove = [
+        r"L'articolo .* proviene da .* \.",
+        r"L'articolo .* proviene da .*",
+        r"proviene da segnonline \.",
+        r"proviene da segnonline",
+        r"proviene da atpdiary",
+        r"proviene da artribune"
+    ]
+    
+    for pattern in patterns_to_remove:
+        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+    
+    return text.strip()
 
 def scrape_zero():
     cities = ["milano", "roma", "torino", "bologna", "firenze", "napoli", "venezia"]
@@ -167,12 +184,12 @@ def scrape_article(url: str):
     """Estrae un articolo partendo da un URL specifico."""
     try:
         req = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        # Utilizziamo clean_html per pulire il testo dai pattern di attribuzione
+        text = clean_html(req.content)
+        
         soup = BeautifulSoup(req.content, "html.parser")
         title = soup.find("h1").get_text(strip=True) if soup.find("h1") else "Articolo"
         
-        # Cerca div che di solito contengono il testo
-        content_div = soup.find("div", class_="entry-content") or soup.find("article") or soup
-        text = content_div.get_text(separator=" ", strip=True)
         return {
             "source": "Link Diretto",
             "title": title,
