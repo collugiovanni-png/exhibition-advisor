@@ -74,6 +74,7 @@ body {
 }
 
 .hero h1 {
+    color: #ffffff;
     font-weight: 800;
     font-size: clamp(2.5rem, 8vw, 5rem);
     line-height: 1;
@@ -83,13 +84,14 @@ body {
 }
 
 .highlight {
-    color: var(--text-main);
+    color: #ffffff;
 }
 
 .hero p {
     font-family: 'Space Mono', monospace;
     font-size: 1rem;
-    color: var(--text-muted);
+    color: #ffffff;
+    opacity: 0.8;
     margin-top: 1.5rem;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -152,9 +154,14 @@ button {
     transition: all 0.3s ease;
 }
 
-button:hover:not(:disabled) {
-    background: var(--accent-hover);
-    border-color: rgba(255, 255, 255, 0.4);
+.btn-primary {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+.btn-primary:hover {
+    background: rgba(255, 255, 255, 0.9) !important;
 }
 
 button:disabled {
