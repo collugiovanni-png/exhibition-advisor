@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <title>Exhibition Advisor - Presentazione</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/blood.min.css" id="theme">
+    <style>
+        .reveal h1, .reveal h2, .reveal h3 {
+            text-transform: none;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.02em;
+        }
+        .reveal h1 { font-size: 2.2em; color: #fff; font-weight: 800; }
+        .reveal h2 { font-size: 1.5em; color: #a0a0a0; font-weight: 300; }
+        .reveal h3 { font-size: 1.6em; color: #e2e8f0; font-weight: 600; text-align: left; }
+        .reveal p, .reveal li { font-size: 0.8em; text-align: left; line-height: 1.4; color: #cbd5e1; }
+        .reveal .container { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+        .reveal .text-col { flex: 1; }
+        .reveal .img-col { flex: 1; max-height: 500px; border-radius: 10px; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .reveal img { margin: 0; display: block; max-height: 100%; max-width: 100%; object-fit: cover; }
+        blockquote { border-left: 5px solid #a20b0b; padding-left: 20px; font-style: italic; color: #e2e8f0; text-align: left;}
+        
+        /* Stili per la stampa in PDF */
+        @media print {
+            @page {
+                size: 16in 9in; /* Formato 16:9 perfetto per evitare bordi bianchi */
+                margin: 0;
+            }
+            .reveal .slide-background { background-color: #111 !important; }
+            .reveal section { margin-top: 20px !important; }
+            * { 
+                -webkit-print-color-adjust: exact !important; 
+                color-adjust: exact !important; 
+                -webkit-user-select: none !important; 
+                user-select: none !important; 
+                outline: none !important; 
+            }
+            ::selection { background: transparent !important; color: inherit !important; }
+            ::-moz-selection { background: transparent !important; color: inherit !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1 -->
+            <section data-background-color="#050505">
+                <div class="container">
+                    <div class="text-col">
+                        <h1>Exhibition Advisor</h1>
+                        <h2>L'algoritmo come critico d'arte e macchina speculativa</h2>
+                    </div>
+                    <div class="img-col">
+                        <img src="file:///Users/giovanni/.gemini/antigravity/brain/2f113798-9477-4669-9692-ad5815388257/exhibition_intro_1777804326941.png" alt="Intro">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 2 -->
+            <section>
+                <h3>Introduzione</h3>
+                <p>Nell'era della sovrabbondanza informativa, il sistema dell'arte contemporanea produce quotidianamente una mole incalcolabile di testi, comunicati stampa, recensioni e segnalazioni.</p>
+                <p>Un flusso ininterrotto in cui il linguaggio critico spesso si avvita su se stesso, diventando un rumore di fondo autoreferenziale.</p>
+                <p>Da questa constatazione nasce <strong>Exhibition Advisor</strong>, un progetto che ha iniziato il suo percorso come un semplice aggregatore di notizie per trasformarsi in un'opera di design speculativo che mette a nudo l'entropia del sistema dell'informazione artistica.</p>
+            </section>
+
+            <!-- Slide 3 -->
+            <section>
+                <h3>1. La genesi: dal tool all'aggregatore spietato</h3>
+                <p>L'idea originaria era squisitamente pragmatica: costruire uno strumento in grado di setacciare automaticamente i principali feed RSS dell'arte in Italia (Artribune, Exibart, ATP Diary, Segno, Zero.eu).</p>
+                <p>L'obiettivo? Estrarre le notizie sulle mostre in corso e restituire un <strong>giudizio rapido, perentorio e inappellabile</strong>. L'utente doveva essere liberato dall'onere di leggere decine di articoli per capire se un evento valesse la pena di essere visitato o meno.</p>
+            </section>
+
+            <!-- Slide 4 -->
+            <section>
+                <h3>Architettura Tecnica e Parodia</h3>
+                <p>Dal punto di vista tecnico, il progetto è stato fondato su un'architettura solida e leggera:</p>
+                <ul>
+                    <li>Un backend in Python basato su FastAPI e Beautiful Soup per lo scraping.</li>
+                    <li>Un frontend minimale e dark-themed (HTML/CSS/JS).</li>
+                </ul>
+                <p>L'algoritmo iniziale analizzava i testi estratti cercando keyword positive o negative, assegnando un punteggio e sputando sentenze che spaziavano dal "capolavoro imperdibile" alla "schifezza inenarrabile". Era un gioco goliardico, una parodia della critica d'arte ridotta ai minimi termini.</p>
+            </section>
+
+            <!-- Slide 5 -->
+            <section>
+                <div class="container">
+                    <div class="text-col">
+                        <h3>2. Il clustering: alla ricerca della sintesi dialettica</h3>
+                        <p>Ben presto, ci siamo resi conto che limitarsi a valutare singoli articoli era riduttivo. Il sistema dell'arte vive di eco mediatiche.</p>
+                        <p>Abbiamo quindi implementato un sistema di <strong>clustering</strong>: l'algoritmo ha iniziato a incrociare i dati, raggruppando articoli diversi che parlavano della stessa mostra (basandosi su similarità di titoli e contenuti).</p>
+                    </div>
+                    <div class="img-col">
+                        <img src="file:///Users/giovanni/.gemini/antigravity/brain/2f113798-9477-4669-9692-ad5815388257/clustering_dialectic_1777804451901.png" alt="Clustering">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6 -->
+            <section>
+                <h3>La ricezione come vera metrica</h3>
+                <p>Questa evoluzione tecnica ha generato una nuova prospettiva logica. L'Advisor non giudicava più la singola recensione, ma la <em>"ricezione"</em> della mostra.</p>
+                <ul>
+                    <li>Se più testate ne parlavano bene, si creava un <strong>consenso</strong>.</li>
+                    <li>Se i giudizi erano contrastanti, emergeva una <strong>collisione</strong>.</li>
+                    <li>Se ne parlava un solo feed, la mostra era in uno stato di <strong>isolamento</strong>.</li>
+                </ul>
+                <p>Da questa base dati stratificata, il software doveva ora generare una <em>sintesi dialettica</em>.</p>
+            </section>
+
+            <!-- Slide 7 -->
+            <section>
+                <h3>3. L'evoluzione del linguaggio: il critico metastorico</h3>
+                <p>È in questa fase che l'Advisor ha subito la sua prima grande metamorfosi concettuale. Le sentenze parodistiche non bastavano più.</p>
+                <p>Abbiamo deciso di infondere nella macchina il DNA della critica d'arte più alta e, al contempo, più opaca. Il motore di generazione del testo è stato riscritto per diventare un <strong>critico metastorico</strong>.</p>
+            </section>
+
+            <!-- Slide 8 -->
+            <section>
+                <h3>La Decostruzione Verbale</h3>
+                <p>Abbiamo addestrato la generazione dei testi fondendo il rigore analitico del '900 (riecheggiando Benjamin, Argan, Barthes) con il vocabolario fluido del contemporaneo (rimediazione, post-digitale, ecologia dello sguardo).</p>
+                <p>L'algoritmo ha imparato a rilevare il medium dell'evento (pittura, scultura, fotografia, corpo) e ad adattare l'osservazione. Il risultato non era più una stroncatura, ma una complessa decostruzione verbale, densa di concetti strutturali, che suonava tanto autorevole quanto volutamente astrusa.</p>
+            </section>
+
+            <!-- Slide 9 -->
+            <section>
+                <div class="container">
+                    <div class="text-col">
+                        <h3>4. La voce e il corpo: il flusso radio</h3>
+                        <p>Un progetto del genere non poteva rimanere muto. Per dare fisicità all'Advisor, abbiamo introdotto una componente audio, trasformando l'interfaccia in un vero e proprio <strong>flusso radio continuo</strong>.</p>
+                        <p>L'utente poteva premere un tasto e lasciare che il sistema pescasse casualmente le mostre, le leggesse ad alta voce e ne recitasse il giudizio.</p>
+                    </div>
+                    <div class="img-col">
+                        <img src="file:///Users/giovanni/.gemini/antigravity/brain/2f113798-9477-4669-9692-ad5815388257/radio_flow_1777805112389.png" alt="Radio Flow">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 10 -->
+            <section>
+                <h3>La sintesi vocale: Due Speaker Virtuali</h3>
+                <p>Abbandonando i servizi cloud in favore delle API `window.speechSynthesis` native dei browser, abbiamo diviso il lavoro tra due speaker virtuali:</p>
+                <ul>
+                    <li><strong>La voce maschile (informativa):</strong> Legge il titolo della mostra, il luogo e le fonti. Ha un respiro da bollettino informativo ("In primo piano l'esposizione di Giacomo Balla. Un evento in corso a Milano...").</li>
+                    <li><strong>La voce femminile (critica):</strong> Recita l'analisi. Abbiamo manipolato il pitch e il rate per rendere la voce sintetica profonda, calda, meditativa e leggermente alienata.</li>
+                </ul>
+                <p>Il passaggio dall'informazione al giudizio ha creato un'atmosfera sospesa e magnetica.</p>
+            </section>
+
+            <!-- Slide 11 -->
+            <section>
+                <div class="container">
+                    <div class="text-col">
+                        <h3>5. L'epifania concettuale: design speculativo</h3>
+                        <p>Mentre testavamo il flusso radio, è emersa una criticità: ascoltata a lungo, la voce del critico risultava monotona, ripetitiva, una sorta di disco rotto in cui le frasi sembravano scambiabili tra loro.</p>
+                        <p>Invece di correggere questo difetto, abbiamo compreso che <strong>la monotonia non era un errore, ma il messaggio stesso.</strong></p>
+                    </div>
+                    <div class="img-col">
+                        <img src="file:///Users/giovanni/.gemini/antigravity/brain/2f113798-9477-4669-9692-ad5815388257/speculative_design_1777805129209.png" alt="Speculative Design">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 12 -->
+            <section>
+                <h3>La meta-macchina e la consapevolezza algoritmica</h3>
+                <p>L'opera non doveva essere un perfetto strumento di informazione, ma una <strong>critica implicita al sistema dell'arte</strong> e della sua divulgazione.</p>
+                <p>L'Advisor è diventato così un'opera di media art. Il software ha iniziato a inserire nei suoi testi dei <em>glitch intellettuali</em>, ammettendo la sua natura artificiale.</p>
+                <blockquote>"In questa decodifica seriale, il dato artistico si fa pura entropia informativa"</blockquote>
+                <p>Il lessico abbraccia termini come saturazione del visibile, entropia, obsolescenza del segno.</p>
+            </section>
+
+            <!-- Slide 13 -->
+            <section>
+                <h3>6. La permutazione algoritmica: struttura nella ripetizione</h3>
+                <p>Per far sì che questa monotonia non scadesse nella mera povertà tecnica, abbiamo riprogettato il motore di sintesi introducendo la permutazione algoritmica.</p>
+                <p>Libreria dei frammenti triplicata. Il sistema sceglie dinamicamente tra strutture diverse: eleganti, brutali o puramente teoriche. Aggiungendo connettori logici, il software genera decine di migliaia di combinazioni uniche.</p>
+                <p>Il risultato è un discorso che cambia costantemente forma e vocabolario, ma mantiene inalterato quel tono inesorabile, seriale e distaccato.</p>
+            </section>
+
+            <!-- Slide 14 -->
+            <section>
+                <h3>Conclusione</h3>
+                <p>Oggi Exhibition Advisor è una <strong>macchina celibe</strong> che fagocita feed RSS e risputa sentenze in un ciclo continuo. Ascoltarlo significa immergersi in un rituale burocratico e intellettuale che ipnotizza e aliena.</p>
+                <p>Il progetto dimostra come la programmazione possa farsi pratica artistica quando interroga i processi che automatizza.</p>
+                <p>Non ci dice semplicemente quali mostre andare a vedere; ci ricorda, con la sua voce sintetica e le sue analisi perfette e vuote, che forse il vero problema non è comprendere l'opera d'arte, ma sopravvivere al rumore che la circonda.</p>
+                <br>
+                <p style="text-align: center;">
+                    <a href="https://exhibition-advisor.onrender.com" target="_blank" style="color: #38bdf8; text-decoration: none;">
+                        <strong>exhibition-advisor.onrender.com</strong>
+                    </a>
+                </p>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            center: false,
+            margin: 0.1,
+            // Modifica le opzioni per supportare l'esportazione PDF nativa
+            pdfSeparateFragments: false,
+            pdfMaxPagesPerSlide: 1,
+            backgroundTransition: 'fade'
+        });
+    </script>
+</body>
+</html>

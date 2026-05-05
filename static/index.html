@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exhibition Advisor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -59,25 +59,9 @@
             "Notizie sulla mostra in oggetto: "
         ];
 
-        /** Triadi di colori scuri — cambiano a ogni nuovo giudizio */
-        const JUDGMENT_PALETTES = [
-            ['#0f172a', '#1e1b4b', '#4c1d95'],
-            ['#0c1929', '#134e4a', '#0e7490'],
-            ['#1a1033', '#5b21b6', '#831843'],
-            ['#0f172a', '#14532d', '#166534'],
-            ['#1c1917', '#7c2d12', '#9a3412'],
-            ['#0f172a', '#1e3a8a', '#075985'],
-            ['#18181b', '#713f12', '#854d0e'],
-            ['#0f172a', '#4c0519', '#881337'],
-            ['#042f2e', '#115e59', '#155e75'],
-            ['#1e1b4b', '#6d28d9', '#be185d'],
-        ];
-
+        // Il background è ora rigorosamente nero via CSS.
         function setJudgmentBackground() {
-            const i = Math.floor(Math.random() * JUDGMENT_PALETTES.length);
-            const [a, b, c] = JUDGMENT_PALETTES[i];
-            const el = document.getElementById('bg-layer');
-            if (el) el.style.background = `linear-gradient(145deg, ${a} 0%, ${b} 48%, ${c} 100%)`;
+            // Niente più gradienti psichedelici: brutalismo allo stato puro.
         }
 
         // --- MOTORE DI SINTESI VOCALE LOCALE (GRATIS & BILANCIATA) ---
