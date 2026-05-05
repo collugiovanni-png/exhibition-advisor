@@ -26,13 +26,15 @@
         </section>
 
         <section class="latest-exhibitions">
-            <div class="section-header">
-                <h2>Ultime Mostre dai Feed</h2>
-                <button onclick="loadExhibitions()" id="refresh-btn" class="btn-secondary">Aggiorna Feed</button>
-            </div>
-            <div id="feed-loading" class="hidden loading">Scraping dei feed d'arte...</div>
-            <div id="exhibitions-list" class="grid-container" style="margin-bottom: 4rem;">
-                <!-- Le mostre verranno caricate qui dinamicamente -->
+            <div class="black-block">
+                <div class="section-header">
+                    <h2>Ultime Mostre dai Feed</h2>
+                    <button onclick="loadExhibitions()" id="refresh-btn" class="btn-secondary" style="border-color: #fff; color: #fff;">Aggiorna Feed</button>
+                </div>
+                <div id="feed-loading" class="hidden loading">Scraping dei feed d'arte...</div>
+                <div id="exhibitions-list" class="grid-container">
+                    <!-- Le mostre verranno caricate qui dinamicamente -->
+                </div>
             </div>
         </section>
 
