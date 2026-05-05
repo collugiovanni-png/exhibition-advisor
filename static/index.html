@@ -92,9 +92,6 @@
         function speakText(text, type, onEnd) {
             if (!isAutoplaying && type !== 'manual') return;
 
-            // Scriviamo nel monitor di debug
-            document.getElementById('debug-monitor').innerText = "STREMAING AUDIO [" + type + "]: " + text;
-
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'it-IT';
             utterance.volume = 1.0; 
