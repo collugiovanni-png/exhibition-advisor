@@ -50,7 +50,7 @@ body {
 
 .hero.full-bleed {
     width: 100%;
-    min-height: 80vh;
+    aspect-ratio: 2.95 / 1;
     display: flex;
     justify-content: center;
     align-items: center;
