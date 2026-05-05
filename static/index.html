@@ -9,21 +9,16 @@
 </head>
 <body>
     <div id="bg-layer" aria-hidden="true"></div>
-    <div class="container">
-        <header class="hero">
-            <div class="hero-img-box">
-                <img src="/static/hero_left.png" alt="Installation view">
-            </div>
-            <div class="hero-content">
-                <h1>EXHIBITION<br><span class="highlight">ADVISOR</span></h1>
-                <p>Spietato. Perentorio. Infallibile.</p>
-                <button id="autoplay-btn" onclick="toggleAutoplay()" class="btn-primary" style="margin-top: 1.5rem;">📡 Avvia Flusso Radio</button>
-            </div>
-            <div class="hero-img-box">
-                <img src="/static/gallery_bg.png" alt="Gallery space">
-            </div>
-        </header>
+    
+    <header class="hero full-bleed">
+        <div class="hero-content">
+            <h1>EXHIBITION<br><span class="highlight">ADVISOR</span></h1>
+            <p>Spietato. Perentorio. Infallibile.</p>
+            <button id="autoplay-btn" onclick="toggleAutoplay()" class="btn-primary" style="margin-top: 1.5rem;">📡 Avvia Flusso Radio</button>
+        </div>
+    </header>
 
+    <div class="container">
         <section id="autoplay-display" class="glass-panel hidden" style="text-align: center; margin-bottom: 4rem; padding: 3rem; border: 2px solid var(--accent);">
             <div style="font-size: 0.9rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;">📻 In Onda 📻</div>
             <h2 id="autoplay-title" style="font-size: 2rem; margin-bottom: 1.5rem;">Cercando una mostra da stroncare...</h2>
