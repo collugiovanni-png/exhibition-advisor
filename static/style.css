@@ -66,6 +66,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     border-bottom: none;
+    transition: background-image 1s ease-in-out;
 }
 
 .hero-content {

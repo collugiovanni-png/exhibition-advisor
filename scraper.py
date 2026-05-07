@@ -28,6 +28,26 @@ def clean_html(raw_html: str) -> str:
     
     return text.strip()
 
+def extract_image(entry):
+    """Estrae un URL immagine da un entry di feedparser."""
+    # 1. Cerca in media_content
+    if 'media_content' in entry and len(entry.media_content) > 0:
+        return entry.media_content[0]['url']
+    
+    # 2. Cerca in media_thumbnail
+    if 'media_thumbnail' in entry and len(entry.media_thumbnail) > 0:
+        return entry.media_thumbnail[0]['url']
+    
+    # 3. Cerca tag <img> nella descrizione
+    desc = entry.get("description", "")
+    if desc:
+        soup = BeautifulSoup(desc, "html.parser")
+        img = soup.find("img")
+        if img:
+            return img.get("src")
+            
+    return None
+
 def scrape_zero():
     cities = ["milano", "roma", "torino", "bologna", "firenze", "napoli", "venezia"]
     results = []
@@ -43,7 +63,6 @@ def scrape_zero():
                 continue
             
             soup = BeautifulSoup(req.content, "html.parser")
-            # In Zero.eu, gli eventi sono link con classe "event-preview"
             articles = soup.select("a.event-preview")
             
             count = 0
@@ -59,12 +78,13 @@ def scrape_zero():
                     if link.startswith("/"):
                         link = "https://zero.eu" + link
                     
-                    # La descrizione spesso è in un tag <p> o div dentro il link
                     desc_tag = art.find("p")
                     desc = desc_tag.get_text(strip=True) if desc_tag else ""
                     
-                    # Se non c'è descrizione nel link, cerchiamo nel testo dell'articolo stesso
-                    # Per ora prendiamo quello che c'è nella card
+                    # Estrazione immagine da Zero.eu
+                    img_tag = art.find("img")
+                    image_url = img_tag.get("src") if img_tag else None
+                    
                     results.append({
                         "source": f"Zero ({city.capitalize()})",
                         "city": city.capitalize(),
@@ -72,7 +92,8 @@ def scrape_zero():
                         "link": link,
                         "date": "In corso",
                         "text": f"{title} {desc}",
-                        "summary": desc[:200] + "..." if len(desc) > 200 else desc
+                        "summary": desc[:200] + "..." if len(desc) > 200 else desc,
+                        "image": image_url
                     })
                     count += 1
         except Exception as e:
@@ -100,7 +121,8 @@ def scrape_exhibitions():
                 "link": entry.link,
                 "date": entry.get("published", ""),
                 "text": full_text,
-                "summary": desc[:200] + "..." if len(desc) > 200 else desc
+                "summary": desc[:200] + "..." if len(desc) > 200 else desc,
+                "image": extract_image(entry)
             })
     except Exception as e:
         print(f"Errore scraping Artribune: {e}")
@@ -122,7 +144,8 @@ def scrape_exhibitions():
                 "link": entry.link,
                 "date": entry.get("published", ""),
                 "text": full_text,
-                "summary": desc[:200] + "..." if len(desc) > 200 else desc
+                "summary": desc[:200] + "..." if len(desc) > 200 else desc,
+                "image": extract_image(entry)
             })
     except Exception as e:
         print(f"Errore scraping Exibart: {e}")
@@ -144,7 +167,8 @@ def scrape_exhibitions():
                 "link": entry.link,
                 "date": entry.get("published", ""),
                 "text": full_text,
-                "summary": desc[:200] + "..." if len(desc) > 200 else desc
+                "summary": desc[:200] + "..." if len(desc) > 200 else desc,
+                "image": extract_image(entry)
             })
     except Exception as e:
         print(f"Errore scraping ATP Diary: {e}")
@@ -166,7 +190,8 @@ def scrape_exhibitions():
                 "link": entry.link,
                 "date": entry.get("published", ""),
                 "text": full_text,
-                "summary": desc[:200] + "..." if len(desc) > 200 else desc
+                "summary": desc[:200] + "..." if len(desc) > 200 else desc,
+                "image": extract_image(entry)
             })
     except Exception as e:
         print(f"Errore scraping Segno: {e}")

@@ -209,6 +209,14 @@
                 const res = await fetch('/api/exhibitions');
                 const data = await res.json();
                 
+                // Aggiornamento Header Dinamico (nuova funzionalità)
+                if (data.featured_image) {
+                    const hero = document.querySelector('.hero.full-bleed');
+                    if (hero) {
+                        hero.style.backgroundImage = `url('${data.featured_image}')`;
+                    }
+                }
+                
                 exhibitionsData = (data.clusters || []).map(c => {
                     const art = (c.articles && c.articles.length > 0) ? c.articles[0] : {};
                     const synth = c.synthesis || { text: "", tone: "indefinito" };

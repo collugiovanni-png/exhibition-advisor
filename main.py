@@ -63,7 +63,16 @@ def get_exhibitions():
     clusters = cluster_exhibitions(processed_items)
     
     final_results = []
+    featured_image = None
+    
     for cluster in clusters:
+        # Cerchiamo la prima immagine valida per l'header dinamico
+        if not featured_image:
+            for exh in cluster:
+                if exh.get("image"):
+                    featured_image = exh["image"]
+                    break
+
         # Generiamo la sintesi intellettuale (Anni '60-'70) per il gruppo
         synthesis = generate_intellectual_synthesis(cluster)
         
@@ -84,7 +93,10 @@ def get_exhibitions():
             "sources_count": len(cluster)
         })
         
-    return clean_redundant_phrase({"clusters": final_results})
+    return clean_redundant_phrase({
+        "clusters": final_results,
+        "featured_image": featured_image
+    })
 
 @app.post("/api/analyze_url")
 def analyze_url(req: ArticleRequest):
