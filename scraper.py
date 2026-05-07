@@ -55,7 +55,10 @@ def extract_image(entry):
         if img:
             src = img.get("src")
             if src and src.startswith("http"):
-                return src
+                # Filtriamo i placeholder comuni (es. blank.png, pixel.gif, etc)
+                placeholders = ["blank", "spacer", "pixel", "logo", "icon", "advertisement", "spinner"]
+                if not any(p in src.lower() for p in placeholders):
+                    return src
             
     return None
 
@@ -96,6 +99,12 @@ def scrape_zero():
                     img_tag = art.find("img")
                     image_url = img_tag.get("src") if img_tag else None
                     
+                    # Filtro placeholder anche per Zero
+                    if image_url:
+                        placeholders = ["blank", "spacer", "pixel", "logo", "icon", "spinner"]
+                        if any(p in image_url.lower() for p in placeholders):
+                            image_url = None
+                            
                     results.append({
                         "source": f"Zero ({city.capitalize()})",
                         "city": city.capitalize(),
