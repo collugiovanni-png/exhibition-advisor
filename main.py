@@ -63,7 +63,7 @@ def get_exhibitions():
     clusters = cluster_exhibitions(processed_items)
     
     final_results = []
-    featured_image = "/static/gallery_bg.png" # Default fallback
+    featured_image = None
     
     image_found = False
     for cluster in clusters:
