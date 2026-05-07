@@ -213,7 +213,15 @@
                 if (data.featured_image) {
                     const hero = document.querySelector('.hero.full-bleed');
                     if (hero) {
-                        hero.style.backgroundImage = `url('${data.featured_image}')`;
+                        // Creiamo un oggetto immagine per pre-caricarla e verificare se esiste
+                        const img = new Image();
+                        img.onload = () => {
+                            hero.style.backgroundImage = `url('${data.featured_image}')`;
+                        };
+                        img.onerror = () => {
+                            console.log("Featured image failed to load, keeping default.");
+                        };
+                        img.src = data.featured_image;
                     }
                 }
                 

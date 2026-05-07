@@ -63,14 +63,16 @@ def get_exhibitions():
     clusters = cluster_exhibitions(processed_items)
     
     final_results = []
-    featured_image = None
+    featured_image = "/static/gallery_bg.png" # Default fallback
     
+    image_found = False
     for cluster in clusters:
         # Cerchiamo la prima immagine valida per l'header dinamico
-        if not featured_image:
+        if not image_found:
             for exh in cluster:
                 if exh.get("image"):
                     featured_image = exh["image"]
+                    image_found = True
                     break
 
         # Generiamo la sintesi intellettuale (Anni '60-'70) per il gruppo

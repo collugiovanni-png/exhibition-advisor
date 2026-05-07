@@ -29,22 +29,33 @@ def clean_html(raw_html: str) -> str:
     return text.strip()
 
 def extract_image(entry):
-    """Estrae un URL immagine da un entry di feedparser."""
+    """Estrae un URL immagine da un entry di feedparser in modo robusto."""
     # 1. Cerca in media_content
     if 'media_content' in entry and len(entry.media_content) > 0:
         return entry.media_content[0]['url']
     
-    # 2. Cerca in media_thumbnail
+    # 2. Cerca in enclosures
+    if 'enclosures' in entry:
+        for enc in entry.enclosures:
+            if enc.get('type', '').startswith('image/'):
+                return enc.href
+    
+    # 3. Cerca in media_thumbnail
     if 'media_thumbnail' in entry and len(entry.media_thumbnail) > 0:
         return entry.media_thumbnail[0]['url']
     
-    # 3. Cerca tag <img> nella descrizione
-    desc = entry.get("description", "")
-    if desc:
-        soup = BeautifulSoup(desc, "html.parser")
+    # 4. Cerca tag <img> nella descrizione o nel contenuto
+    html_content = entry.get("description", "")
+    if 'content' in entry:
+        html_content += entry.content[0].value
+        
+    if html_content:
+        soup = BeautifulSoup(html_content, "html.parser")
         img = soup.find("img")
         if img:
-            return img.get("src")
+            src = img.get("src")
+            if src and src.startswith("http"):
+                return src
             
     return None
 
